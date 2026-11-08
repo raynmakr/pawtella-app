@@ -125,3 +125,40 @@ test('mock checkout → orders/paid payload → upsert → listOrdersForUser', a
   const bal = await one('SELECT paw_points FROM users WHERE id = $1', [user.id]);
   assert.ok(bal.paw_points >= 218, `expected ≥218, got ${bal.paw_points}`);
 });
+
+test('paid order reserves depot stock; fulfilled/cancelled releases it exactly once', async () => {
+  const s = suffix();
+  const sku = `TORD-${s.toUpperCase()}`;
+  await query(`INSERT INTO inventory_items (sku, name, qty_on_hand) VALUES ($1, 'Orders test item', 10)`, [sku]);
+  const base = {
+    id: Date.now() + Math.floor(Math.random() * 1000),
+    financial_status: 'paid',
+    currency: 'CAD',
+    subtotal_price: '20.00',
+    total_price: '22.60',
+    line_items: [{ sku, title: 'Orders test item', quantity: 3, price: '6.67' }],
+    shipping_lines: [{ title: 'Pickup' }],
+  };
+  orders.push(String(base.id));
+  const reserved = async () => (await one('SELECT qty_reserved_online FROM inventory_items WHERE sku = $1', [sku])).qty_reserved_online;
+  try {
+    await upsertOrderFromWebhook(base, { topic: 'orders/paid' });
+    assert.equal(await reserved(), 3, 'reserved on paid');
+    await upsertOrderFromWebhook({ ...base, fulfillments: [{ status: 'success', shipment_status: 'ready_for_pickup' }] }, { topic: 'orders/updated' });
+    assert.equal(await reserved(), 3, 'still reserved while awaiting pickup');
+    await upsertOrderFromWebhook({ ...base, fulfillment_status: 'fulfilled', fulfillments: [{ status: 'success', shipment_status: 'picked_up' }] }, { topic: 'orders/fulfilled' });
+    assert.equal(await reserved(), 0, 'released on pickup');
+    await upsertOrderFromWebhook({ ...base, fulfillment_status: 'fulfilled', fulfillments: [{ status: 'success', shipment_status: 'picked_up' }] }, { topic: 'orders/updated' });
+    assert.equal(await reserved(), 0, 'not released twice');
+
+    const cancelled = { ...base, id: base.id + 1 };
+    orders.push(String(cancelled.id));
+    await upsertOrderFromWebhook(cancelled, { topic: 'orders/paid' });
+    assert.equal(await reserved(), 3);
+    await upsertOrderFromWebhook({ ...cancelled, cancelled_at: new Date().toISOString(), financial_status: 'voided' }, { topic: 'orders/cancelled' });
+    assert.equal(await reserved(), 0, 'released on cancel');
+  } finally {
+    await query('DELETE FROM shop_orders WHERE shopify_order_id = ANY($1)', [[String(base.id), String(base.id + 1)]]);
+    await query('DELETE FROM inventory_items WHERE sku = $1', [sku]);
+  }
+});
