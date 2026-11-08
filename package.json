@@ -12,7 +12,8 @@
     "migrate": "node scripts/migrate.js",
     "seed": "node scripts/seed.js",
     "test": "node --test",
-    "deploy": "vercel --prod"
+    "deploy": "vercel --prod",
+    "seed:demo": "node scripts/seed-demo.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",

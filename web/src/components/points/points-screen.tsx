@@ -1,13 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   CheckCircle2Icon,
   CircleIcon,
   GiftIcon,
   HistoryIcon,
   InfoIcon,
+  LoaderCircleIcon,
   ShoppingBagIcon,
   SparklesIcon,
   TrophyIcon,
@@ -20,6 +24,9 @@ import { PageHeader } from "@/components/page-header";
 import { ErrorState } from "@/components/error-state";
 import { PawIcon } from "@/components/logo";
 import { pointsService } from "@/services/points";
+import { shopService } from "@/services/shop";
+import { addToCart } from "@/services/cart";
+import { errorMessage } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { formatCents, formatPoints } from "@/lib/format";
 import { useSession } from "@/stores/session";
@@ -45,6 +52,27 @@ function QuickAction({ href, icon: Icon, label, tone }: { href: string; icon: Lu
 
 export function PointsScreen() {
   const { user, isAuthenticated } = useSession();
+  const router = useRouter();
+  const [buying, setBuying] = useState<string | null>(null);
+
+  /** Add the pack's Shopify variant to the cart (Web D's cart service); fall back to the product page. */
+  const buyPack = async (pack: PointsPack) => {
+    setBuying(pack.sku);
+    try {
+      const { product } = await shopService.product(pack.handle);
+      const variant = product.variants.find((v) => v.availableForSale) ?? product.variants[0];
+      if (!variant) throw new Error("This pack isn't available right now");
+      await addToCart({ variantId: variant.id, quantity: 1 });
+      toast.success(`${formatPoints(pack.points)} Paw Points pack added to your cart`, {
+        action: { label: "View cart", onClick: () => router.push("/cart") },
+      });
+    } catch (err) {
+      toast.error(errorMessage(err, "Couldn't add the pack"));
+      router.push(`/shop/${pack.handle}`);
+    } finally {
+      setBuying(null);
+    }
+  };
   const q = useQuery<PointsSummary>({
     queryKey: queryKeys.points.summary,
     queryFn: () => pointsService.summary(),
@@ -154,7 +182,8 @@ export function PointsScreen() {
                 <p className="text-xs text-muted-foreground">
                   {perPoint.toFixed(1)}¢ per point · worth {formatCents(p.points * valueCents)} in store
                 </p>
-                <Button className="mt-4 w-full" variant={best ? "default" : "outline"} nativeButton={false} render={<Link href={`/shop/${p.handle}`} />}>
+                <Button className="mt-4 w-full" variant={best ? "default" : "outline"} onClick={() => void buyPack(p)} disabled={buying !== null}>
+                  {buying === p.sku && <LoaderCircleIcon data-icon="inline-start" className="animate-spin" />}
                   Buy for {formatCents(p.priceCents)}
                 </Button>
               </div>
