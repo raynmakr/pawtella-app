@@ -52,21 +52,27 @@ mobile/         Expo SDK 58 app (TypeScript). Routes in mobile/src/app.
 - **Logging:** `console.log('[area] message', { ids })`. No secrets in logs.
 - **Rate limiting:** not in Phase 1 except AI generation (per-user daily cap in points rules).
 
-## Mobile rules
+## Web app rules (`web/`, Next.js) — the client for Phase 1; the native app is rebuilt later
 
-- Expo SDK 58, TypeScript strict, expo-router (routes in `mobile/src/app/`, everything else in
-  `mobile/src/{components,hooks,services,stores,constants,lib}`). `@/` → `mobile/src/`.
-- Follow `mobile/AGENTS.md`: fetch Expo v58 docs before using an Expo API; never trust memory.
-  `npx expo install <pkg>` for dependencies.
-- Server state via `@tanstack/react-query` (query keys in `src/lib/query-keys.ts`); local shared
-  state via `zustand` only for auth session and cart badge. Invalidate queries after mutations.
-- API client `src/services/api.ts` (axios, base `${EXPO_PUBLIC_API_URL}/api`, Bearer token from
-  `expo-secure-store`, 401 → sign out). One `src/services/<area>.ts` per API area with typed
-  functions; types in `src/types/<area>.ts` mirroring the API JSON (camelCase).
-- Design tokens only from `src/constants/theme.ts` via `useTheme()`; no hard-coded colors in
-  screens. Light and dark are both first-class.
-- Every list screen: loading skeleton, empty state, error state with retry, pull-to-refresh.
-- Run `npx tsc --noEmit` and `npx expo lint` before reporting done.
+- Next.js (App Router, latest stable), TypeScript strict, Tailwind CSS, shadcn/ui primitives.
+  `@/` → `web/src/`. Routes in `web/src/app/`; everything else in
+  `web/src/{components,hooks,services,stores,lib,types}`.
+- **BFF proxy:** the browser never calls the API host directly. `web/src/app/api/[...path]/route.ts`
+  forwards `/api/*` to `${API_URL}/api/*`, injecting `Authorization: Bearer <token>` from the
+  httpOnly cookie `pawtella_token`. Auth responses (`/api/auth/login|register|apple|google`) set
+  that cookie; `/api/auth/logout` clears it. Server components call `serverApi()` (same injection
+  from `cookies()`); client components call `api()` from `src/services/api.ts` (relative `/api`).
+- Server state via `@tanstack/react-query` in client components (keys in `src/lib/query-keys.ts`);
+  `zustand` only for the session snapshot and cart badge. Invalidate after mutations.
+- One `src/services/<area>.ts` per API area with typed functions; types in `src/types/<area>.ts`
+  mirroring the API JSON (camelCase).
+- Design tokens as CSS variables in `src/app/globals.css` (light + dark via `class="dark"` and
+  `prefers-color-scheme`), mapped into the Tailwind theme; no hard-coded colors in pages.
+- Responsive: bottom tab bar under 768px, left sidebar at ≥768px; content max-width 1100px.
+- Every list: loading skeleton, empty state, error state with retry.
+- Public pages (shop, product, challenge, user profile, post) are server-rendered with metadata
+  for SEO; authenticated pages are client-rendered behind the session.
+- Run `npm run lint`, `npx tsc --noEmit` and `npm run build` before reporting done.
 
 ## Cross-module contracts (exported function signatures)
 
