@@ -51,6 +51,9 @@ async function loadDelegate(area) {
   return handler;
 }
 
+/** app_settings row → API shape. The JSONB value is passed through untouched (keys are user-chosen). */
+const settingRow = (r) => ({ key: r.key, value: r.value, updatedAt: r.updated_at });
+
 /** Built-in sub-routes keyed by area; each is `(req, res, segs) => result`. */
 export const subroutes = {
   async metrics(req, res, segs) {
@@ -135,12 +138,12 @@ export const subroutes = {
   async settings(req, res, segs) {
     if (req.method === 'GET' && segs.length === 0) {
       const rows = await many('SELECT key, value, updated_at FROM app_settings ORDER BY key');
-      return { settings: camelize(rows) };
+      return { settings: rows.map(settingRow) };
     }
     if (req.method === 'GET' && segs.length === 1) {
       const row = await one('SELECT key, value, updated_at FROM app_settings WHERE key = $1', [segs[0]]);
       if (!row) throw notFound('Setting not found');
-      return camelize(row);
+      return settingRow(row);
     }
     if (req.method === 'PATCH' && segs.length === 0) {
       const b = body(req);
@@ -152,7 +155,7 @@ export const subroutes = {
         [b.key, JSON.stringify(b.value)],
       );
       console.log('[admin] setting updated', { key: b.key, by: req.admin.userId });
-      return camelize(row);
+      return settingRow(row);
     }
     throw notFound();
   },
@@ -169,7 +172,7 @@ export const subroutes = {
   async automations(req, res, segs) {
     if (req.method === 'GET' && segs.length === 0) {
       const last = await one(`SELECT value, updated_at FROM app_settings WHERE key = 'automation.last_run'`);
-      return { journeys: JOURNEYS.map((j) => ({ id: j.id, channels: j.channels })), lastRun: last ? camelize(last) : null };
+      return { journeys: JOURNEYS.map((j) => ({ id: j.id, channels: j.channels })), lastRun: last ? { value: last.value, updatedAt: last.updated_at } : null };
     }
     if (req.method === 'POST' && segs[0] === 'run') {
       const b = body(req);
