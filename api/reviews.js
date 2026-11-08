@@ -6,6 +6,7 @@ import { one, many, withTransaction } from '../lib/db.js';
 import { camelize } from '../lib/serialize.js';
 import { track, EVENT } from '../lib/events.js';
 import { RULES } from '../lib/points-rules.js';
+import { env } from '../lib/env.js';
 import * as points from '../lib/points.js';
 
 const BASE = '/api/reviews';
@@ -72,7 +73,11 @@ async function post(req) {
   const rating = parseInt(b.rating, 10);
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw badRequest('rating must be 1–5');
   const text = typeof b.body === 'string' ? b.body.trim().slice(0, 2000) : null;
-  const photoUrl = typeof b.photoUrl === 'string' && /^https?:\/\//.test(b.photoUrl) ? b.photoUrl : null;
+  // Hosted URLs only in production; the dev mock uploader returns data URLs.
+  const photoOk =
+    typeof b.photoUrl === 'string' &&
+    (/^https?:\/\//.test(b.photoUrl) || (!env.isProd && /^data:image\/(png|jpe?g|webp);base64,/.test(b.photoUrl)));
+  const photoUrl = photoOk ? b.photoUrl : null;
   const petId = b.petId != null ? parseInt(b.petId, 10) : null;
   const orderId = b.orderId != null ? parseInt(b.orderId, 10) : null;
 

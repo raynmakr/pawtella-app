@@ -116,12 +116,13 @@ ${codes ? `<p>Discount codes:</p><ul>${codes}</ul>` : ''}
   <label>Buyer email (optional override) <input name="email" type="email" placeholder="${escapeHtml(cart.buyerEmail || 'buyer@example.com')}" style="width:100%"></label>
   <button type="submit">Complete mock order</button>
 </form>
-<div class="card" id="out" hidden><h3>Result</h3><pre id="json"></pre></div>
+<div class="card" id="out" hidden><h3>Result</h3><pre id="json"></pre><p><a id="back" href="/cart">← Back to Pawtella</a></p></div>
 <script>
   const f=document.getElementById('f');
   f.addEventListener('submit',async(e)=>{e.preventDefault();const fd=new FormData(f);
     const r=await fetch(location.pathname,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fulfillment:fd.get('fulfillment'),email:fd.get('email')||undefined})});
     const j=await r.json();document.getElementById('out').hidden=false;document.getElementById('json').textContent=JSON.stringify(j,null,2);
+    if(r.ok&&j.order&&j.order.id){document.getElementById('back').href='/cart?order='+encodeURIComponent(j.order.id);}
     f.querySelector('button').disabled=r.ok;});
 </script></main></body></html>`;
   res.setHeader('Cache-Control', 'no-store');
