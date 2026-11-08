@@ -152,7 +152,7 @@ test('hold → release credits back; expired holds are released by the sweep', a
 test('createHold validates min, cart cap and balance', async () => {
   const u = await makeUser(100);
   await assert.rejects(() => createHold(u.id, { cartId: 'c', points: 10, subtotalCents: 10000 }), /Minimum 20/);
-  await assert.rejects(() => createHold(u.id, { cartId: 'c', points: 90, subtotalCents: 1000 }), /Maximum 100 Paw Points/);
+  await assert.rejects(() => createHold(u.id, { cartId: 'c', points: 90, subtotalCents: 800 }), /Maximum 80 Paw Points/);
   let err;
   try {
     await createHold(u.id, { cartId: 'c', points: 150, subtotalCents: 100000 });
