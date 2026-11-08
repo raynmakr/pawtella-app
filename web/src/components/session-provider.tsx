@@ -18,15 +18,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/** Server components render this with the session they already read, so the UI never flashes. */
+/**
+ * Server components render this with the session they already read. Hydration happens in an
+ * effect (never during render) so the module-level store is never touched during SSR.
+ */
 export function SessionHydrator({ initial }: { initial: SessionPayload }) {
-  const done = useRef(false);
-  if (!done.current) {
-    // Safe: zustand setState outside React's render of subscribed components has not happened yet
-    // on the first client render (no subscribers mounted above us have read the store).
-    done.current = true;
-    useSessionStore.getState().hydrate(initial);
-  }
   useEffect(() => {
     useSessionStore.getState().hydrate(initial);
   }, [initial]);
