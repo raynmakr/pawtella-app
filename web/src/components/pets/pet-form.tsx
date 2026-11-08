@@ -203,7 +203,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
             <Input id="pet-breed" placeholder={species === "cat" ? "Tabby" : "Golden Retriever"} {...form.register("breed")} />
           </FormField>
           <FormField label="Sex" htmlFor="pet-sex" error={errors.sex?.message}>
-            <Select value={sexValue ?? null} onValueChange={(v) => form.setValue("sex", (v as PetSex) ?? undefined)}>
+            <Select value={sexValue ?? null} onValueChange={(v) => form.setValue("sex", (v as PetSex) ?? undefined)} items={SEXES}>
               <SelectTrigger id="pet-sex" className="w-full">
                 <SelectValue placeholder="Choose" />
               </SelectTrigger>

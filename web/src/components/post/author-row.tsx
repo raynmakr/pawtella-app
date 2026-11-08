@@ -19,7 +19,7 @@ interface AuthorRowProps {
 export function PetChip({ pet, className }: { pet: PostPet; className?: string }) {
   const Icon = pet.species === "cat" ? CatIcon : DogIcon;
   return (
-    <span className={cn("inline-flex h-6 items-center gap-1 rounded-full bg-coral-soft px-2 text-xs font-semibold text-primary", className)}>
+    <span className={cn("inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-coral-soft px-2 text-xs font-semibold whitespace-nowrap text-primary", className)}>
       <Icon className="size-3.5" />
       {pet.name} · {pet.species}
     </span>
@@ -40,16 +40,16 @@ export function AuthorRow({ author, pet, createdAt, trailing, className }: Autho
           </Link>
           {pet && <PetChip pet={pet} className="hidden sm:inline-flex" />}
         </div>
-        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-1.5 text-xs whitespace-nowrap text-muted-foreground">
           <span className="truncate">@{author.handle}</span>
           {createdAt && (
             <>
               <span aria-hidden>·</span>
-              <time dateTime={createdAt}>{timeAgo(createdAt)}</time>
+              <time dateTime={createdAt} className="shrink-0">{timeAgo(createdAt)}</time>
             </>
           )}
-          {pet && <PetChip pet={pet} className="ml-1 sm:hidden" />}
         </div>
+        {pet && <PetChip pet={pet} className="mt-1 sm:hidden" />}
       </div>
       {trailing}
     </div>

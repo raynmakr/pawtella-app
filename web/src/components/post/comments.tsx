@@ -92,7 +92,7 @@ export function Comments({ post }: { post: Post }) {
           <LoadMore hasMore={!!q.hasNextPage} loading={q.isFetchingNextPage} onLoad={() => void q.fetchNextPage()} />
         </>
       )}
-      <form onSubmit={submit} className="sticky bottom-20 flex items-end gap-2 rounded-2xl bg-card p-2 ring-1 ring-border md:bottom-4">
+      <form onSubmit={submit} className="flex items-end gap-2 rounded-2xl bg-muted/50 p-2 ring-1 ring-border">
         <UserAvatar src={user?.avatarUrl} name={user?.displayName ?? user?.handle} size="sm" className="mb-1.5 ml-1 hidden sm:inline-flex" />
         <Textarea
           value={text}

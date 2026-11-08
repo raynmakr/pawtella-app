@@ -165,7 +165,7 @@ export function PartnerApply() {
           <Input id="pa-name" placeholder="Happy Paws Grooming" {...form.register("businessName")} aria-invalid={!!errors.businessName} />
         </FormField>
         <FormField label="Type" htmlFor="pa-type" error={errors.type?.message}>
-          <Select value={typeValue ?? null} onValueChange={(v) => form.setValue("type", v as PartnerType, { shouldValidate: true })}>
+          <Select value={typeValue ?? null} onValueChange={(v) => form.setValue("type", v as PartnerType, { shouldValidate: true })} items={PARTNER_TYPES}>
             <SelectTrigger id="pa-type" className="w-full" aria-invalid={!!errors.type}>
               <SelectValue placeholder="Choose a type" />
             </SelectTrigger>

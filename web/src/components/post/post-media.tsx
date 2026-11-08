@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { HeartIcon, PlayIcon, VolumeXIcon, Volume2Icon } from "lucide-react";
+import { PawIcon } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { isOptimizableImage, mediaAspect } from "@/lib/media";
 import type { MediaType } from "@/types/post";
@@ -25,6 +26,7 @@ interface PostMediaProps {
 
 export function PostMedia({ src, type, poster, alt = "", width, height, onDoubleLike, clampAspect = true, priority, className, sizes }: PostMediaProps) {
   const [burst, setBurst] = useState(0);
+  const [broken, setBroken] = useState(false);
   const lastTap = useRef(0);
   const aspect = clampAspect ? mediaAspect(width, height, 1) : width && height ? width / height : 1;
 
@@ -55,11 +57,16 @@ export function PostMedia({ src, type, poster, alt = "", width, height, onDouble
     >
       {type === "video" ? (
         <AutoplayVideo src={src} poster={poster} />
+      ) : broken ? (
+        <span role="img" aria-label={alt || "Image unavailable"} className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-coral-soft/50 text-primary/60">
+          <PawIcon className="size-14" />
+          <span className="text-xs font-semibold">Image unavailable</span>
+        </span>
       ) : isOptimizableImage(src) ? (
-        <Image src={src} alt={alt} fill priority={priority} sizes={sizes ?? "(min-width: 768px) 640px, 100vw"} className="object-cover" draggable={false} />
+        <Image src={src} alt={alt} fill priority={priority} sizes={sizes ?? "(min-width: 768px) 640px, 100vw"} className="object-cover" draggable={false} onError={() => setBroken(true)} />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element -- data: URLs and unknown hosts can't go through the optimizer
-        <img src={src} alt={alt} className="absolute inset-0 size-full object-cover" draggable={false} />
+        <img src={src} alt={alt} className="absolute inset-0 size-full object-cover" draggable={false} onError={() => setBroken(true)} />
       )}
       {burst > 0 && (
         <span key={burst} className="pointer-events-none absolute inset-0 flex items-center justify-center">

@@ -122,7 +122,7 @@ async function ensureUsers() {
       await query(
         `INSERT INTO pets (user_id, name, species, breed, sex, birthday, weight_kg, photo_url, notes, is_primary)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        [row.id, p.name, p.species, p.breed, p.sex, p.birthday, p.weightKg, p.species === 'cat' ? cat(p.name.toLowerCase() === 'mochi' ? 'cute' : 'tabby', 400, 400) : dog(60 + i + row.id, 400, 400), p.notes ?? null, i === 0],
+        [row.id, p.name, p.species, p.breed, p.sex, p.birthday, p.weightKg, p.species === 'cat' ? cat(p.name.toLowerCase() === 'mochi' ? 'cute' : 'tabby', 400, 400) : dog(60 + i * 7 + USERS.indexOf(u) * 3, 400, 400), p.notes ?? null, i === 0],
       );
       log('pet created', { handle: row.handle, name: p.name });
     }

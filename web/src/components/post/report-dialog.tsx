@@ -46,7 +46,7 @@ export function ReportDialog({ open, onOpenChange, targetType, targetId, label }
         </DialogHeader>
         <div className="grid gap-4 py-1">
           <FormField label="Reason" htmlFor="report-reason" error={error ?? undefined}>
-            <Select value={reason} onValueChange={(v) => setReason(v as ReportReason)}>
+            <Select value={reason} onValueChange={(v) => setReason(v as ReportReason)} items={REPORT_REASONS}>
               <SelectTrigger id="report-reason" className="w-full" aria-invalid={!!error}>
                 <SelectValue placeholder="Choose a reason" />
               </SelectTrigger>

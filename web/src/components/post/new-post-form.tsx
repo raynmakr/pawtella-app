@@ -178,7 +178,12 @@ function NewPostInner() {
           </div>
 
           <FormField label="Challenge (optional)" htmlFor="challenge" description={active.length ? "Enter this post in this week's challenge." : "No challenge is running right now."}>
-            <Select value={challengeId} onValueChange={(v) => setChallengeId(v ?? NONE)} disabled={submitting || active.length === 0}>
+            <Select
+              value={challengeId}
+              onValueChange={(v) => setChallengeId(v ?? NONE)}
+              disabled={submitting || active.length === 0}
+              items={[{ value: NONE, label: "Not entering a challenge" }, ...active.map((c) => ({ value: String(c.id), label: c.title }))]}
+            >
               <SelectTrigger id="challenge" className="w-full">
                 <SelectValue />
               </SelectTrigger>

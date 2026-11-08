@@ -201,7 +201,7 @@ function PayoutDialog({ d, open, onOpenChange }: { d: Dashboard; open: boolean; 
         </DialogHeader>
         <div className="grid gap-4 py-1">
           <FormField label="Method" htmlFor="payout-method">
-            <Select value={method} onValueChange={(v) => v && setMethod(v)}>
+            <Select value={method} onValueChange={(v) => v && setMethod(v)} items={d.rules.payoutMethods.map((m) => ({ value: m, label: m === "etransfer" ? "Interac e-Transfer" : m === "gift_card" ? "Gift card" : m }))}>
               <SelectTrigger id="payout-method" className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -244,7 +244,7 @@ export function PartnerDashboard() {
     return (
       <div className="mx-auto flex w-full max-w-[860px] flex-col gap-5">
         <Skeleton className="h-20 rounded-card" />
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Skeleton className="h-48 rounded-card" />
           <Skeleton className="h-48 rounded-card" />
         </div>
@@ -307,13 +307,13 @@ export function PartnerDashboard() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <section className="rounded-card bg-card p-5 shadow-soft ring-1 ring-border">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <section className="min-w-0 rounded-card bg-card p-5 shadow-soft ring-1 ring-border">
           <h2 className="mb-4 text-lg">Your tier</h2>
           <TierRing d={d} />
         </section>
 
-        <section className="flex flex-col rounded-card bg-secondary p-5 text-secondary-foreground shadow-soft">
+        <section className="flex min-w-0 flex-col rounded-card bg-secondary p-5 text-secondary-foreground shadow-soft">
           <div className="flex items-center gap-2">
             <TicketPercentIcon className="size-5" />
             <h2 className="text-lg text-secondary-foreground">Supplies discount</h2>
@@ -331,7 +331,7 @@ export function PartnerDashboard() {
         </section>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[1fr_1.4fr]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <section className="rounded-card bg-card p-5 shadow-soft ring-1 ring-border">
           <div className="flex items-center gap-2">
             <UsersIcon className="size-5 text-secondary" />
@@ -415,7 +415,7 @@ export function PartnerDashboard() {
           <h2 className="text-lg">Share tools</h2>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">Clients who scan or enter your code get 10 bonus Paw Points and are linked to you for 12 months.</p>
-        <div className="mt-5 grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
+        <div className="mt-5 grid gap-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
           <div className="mx-auto flex flex-col items-center gap-2 sm:mx-0">
             {/* eslint-disable-next-line @next/next/no-img-element -- PNG streamed by the API */}
             <img src="/api/partners/me/qr" alt={`QR code for ${d.links.referral}`} width={176} height={176} className="size-44 rounded-2xl bg-white p-2 ring-1 ring-border" />
@@ -423,21 +423,21 @@ export function PartnerDashboard() {
               <PrinterIcon data-icon="inline-start" /> Print poster
             </Button>
           </div>
-          <div className="grid gap-3">
-            <div>
+          <div className="grid min-w-0 gap-3">
+            <div className="min-w-0">
               <p className="text-xs font-semibold text-muted-foreground">Referral code</p>
               <div className="mt-1 flex items-center gap-2">
-                <code className="flex-1 rounded-xl bg-muted px-3.5 py-2.5 font-heading text-lg font-extrabold tracking-widest">{d.code}</code>
-                <Button variant="outline" size="icon" aria-label="Copy code" onClick={() => copyText(d.code, "Code copied")}>
+                <code className="min-w-0 flex-1 truncate rounded-xl bg-muted px-3.5 py-2.5 font-heading text-lg font-extrabold tracking-widest">{d.code}</code>
+                <Button variant="outline" size="icon" className="shrink-0" aria-label="Copy code" onClick={() => copyText(d.code, "Code copied")}>
                   <CopyIcon />
                 </Button>
               </div>
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-semibold text-muted-foreground">Referral link</p>
               <div className="mt-1 flex items-center gap-2">
                 <code className="min-w-0 flex-1 truncate rounded-xl bg-muted px-3.5 py-2.5 text-sm">{d.links.referral}</code>
-                <Button variant="outline" size="icon" aria-label="Copy link" onClick={() => copyText(d.links.referral, "Link copied")}>
+                <Button variant="outline" size="icon" className="shrink-0" aria-label="Copy link" onClick={() => copyText(d.links.referral, "Link copied")}>
                   <CopyIcon />
                 </Button>
               </div>
