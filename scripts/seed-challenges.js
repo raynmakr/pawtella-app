@@ -9,7 +9,7 @@ const THEMES = [
     slug: 'cozy-season-portrait',
     title: 'Cozy Season Portrait',
     description: 'Blankets, mugs and golden light. Show us your pet at their snuggliest.',
-    preset_id: 'cozy_portrait',
+    preset_id: 'watercolor',
   },
   {
     slug: 'zoomies-in-space',
@@ -21,13 +21,13 @@ const THEMES = [
     slug: 'halloween-costume-reveal',
     title: 'Halloween Costume Reveal',
     description: 'The big reveal: your pet in the costume of the year.',
-    preset_id: 'costume',
+    preset_id: 'halloween',
   },
   {
     slug: 'snow-day-adventure',
     title: 'Snow Day Adventure',
     description: 'First snow, big paws, bigger adventures.',
-    preset_id: 'snow_day',
+    preset_id: 'winter',
   },
 ];
 

@@ -20,6 +20,10 @@
       "destination": "/api/partners-landing"
     },
     {
+      "source": "/for-partners",
+      "destination": "/api/partners-landing"
+    },
+    {
       "source": "/mock-checkout/:cartId",
       "destination": "/api/mock-checkout/:cartId"
     },

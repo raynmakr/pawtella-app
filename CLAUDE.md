@@ -43,7 +43,7 @@ Franpos bot: `node scripts/franpos-bot/export-inventory.mjs --record` (headed di
 - **Inventory**: Franpos is the source of truth for depot quantities (`inventory_items.qty_on_hand`), Shopify for product content, `product_sourcing` for the owner's per-SKU policy (`stock_only` → inventory policy DENY, `special_order` → CONTINUE + lead-days metafield, `hidden` → DRAFT). Online sales only move `qty_reserved_online`; Franpos is never written back.
 - **Admin routes** live under `/api/admin/*` (`requireAdmin`); `api/admin.js` dynamically delegates `challenges`, `partners`, `sourcing` to `lib/admin/<area>.js` when the file exists.
 - **Schema**: migrations 001–009 define everything; add a new numbered file for changes, never edit applied ones. IDs are SERIAL; API JSON is camelCase via `lib/serialize.js camelize()`; DB is snake_case.
-- **Web**: the browser only talks to the Next.js BFF (`/api/*` proxy injects the httpOnly `pawtella_token` cookie as a Bearer header; auth responses set it). Public pages (shop, product, post, profile, challenge) are server-rendered; authenticated pages are client-rendered. Landing pages `/p/:id`, `/r/:code`, `/partners`, `/mock-checkout/:cartId` are served by the API and proxied by `next.config` rewrites.
+- **Web**: the browser only talks to the Next.js BFF (`/api/*` proxy injects the httpOnly `pawtella_token` cookie as a Bearer header; auth responses set it). Public pages (shop, product, post, profile, challenge) are server-rendered; authenticated pages are client-rendered. Landing pages `/p/:id`, `/r/:code`, `/for-partners` (API path `/partners`), `/mock-checkout/:cartId` are served by the API and proxied by `next.config` rewrites; `/partners` on the web app is the in-app directory.
 
 ## Gotchas
 

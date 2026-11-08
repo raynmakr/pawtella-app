@@ -23,7 +23,7 @@ Two deployables: the **API** (this repo's root → Vercel) and the **mobile app*
 4. **Crons** are declared in `vercel.json`. The Hobby plan allows daily crons only; the schedule here (every 5–30 min for generations, automations, inventory) needs **Vercel Pro**. Vercel sends `Authorization: Bearer $CRON_SECRET` automatically.
 5. **Function duration:** `vercel.json` sets `maxDuration: 60`. Video generation never blocks a function (jobs are polled), so 60 s is plenty.
 6. Custom domain: add it in Vercel, then set `APP_URL` to it and configure Shopify webhooks to `https://<domain>/api/webhooks/shopify`.
-7. Landing routes served by the API: `/p/:id` (shared post), `/r/:code` (invite or partner), `/partners` (partner recruiting), `/mock-checkout/:cartId` (dev only; disabled in production).
+7. Landing routes served by the API: `/p/:id` (shared post), `/r/:code` (invite or partner), `/partners` on the API host and `/for-partners` on the web app (partner recruiting), `/mock-checkout/:cartId` (dev only; disabled in production).
 
 ## 3. Third-party setup checklist
 

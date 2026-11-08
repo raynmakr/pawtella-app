@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/p/:id", destination: `${API_URL}/p/:id` },
       { source: "/r/:code", destination: `${API_URL}/r/:code` },
-      { source: "/partners", destination: `${API_URL}/partners` },
+      { source: "/for-partners", destination: `${API_URL}/partners` },
       { source: "/mock-checkout/:cartId", destination: `${API_URL}/mock-checkout/:cartId` },
     ];
   },
