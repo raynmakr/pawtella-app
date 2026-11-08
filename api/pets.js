@@ -99,9 +99,10 @@ async function create(req) {
   const b = requireFields(body(req), ['name', 'species']);
   const fields = validatePet(b);
   const { pet, isFirst } = await withTransaction(async (tx) => {
-    const { count } = await tx.one('SELECT count(*)::int AS count FROM pets WHERE user_id = $1 FOR UPDATE OF pets', [userId]).catch(() => ({ count: null }));
-    const existing = count ?? (await tx.one('SELECT count(*)::int AS count FROM pets WHERE user_id = $1', [userId])).count;
-    const first = existing === 0;
+    // Lock the owner row so two concurrent first-pet inserts can't both become primary.
+    await tx.query('SELECT id FROM users WHERE id = $1 FOR UPDATE', [userId]);
+    const { count } = await tx.one('SELECT count(*)::int AS count FROM pets WHERE user_id = $1', [userId]);
+    const first = count === 0;
     const primary = first ? true : !!fields.is_primary;
     if (primary && !first) await tx.query('UPDATE pets SET is_primary = false WHERE user_id = $1 AND is_primary = true', [userId]);
     const row = await tx.one(

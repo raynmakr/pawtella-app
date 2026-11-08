@@ -52,7 +52,7 @@ test('parses the sample Franpos export (30 rows, $ prices, blank UPCs)', () => {
   assert.equal(acana.barcode, '062786010014');
   assert.equal(acana.brand, 'Acana');
   assert.ok(acana.updatedAt instanceof Date);
-  assert.equal(items.filter((i) => i.qtyOnHand === 0).length, 5);
+  assert.equal(items.filter((i) => i.qtyOnHand === 0).length, 4);
   assert.equal(items.find((i) => i.sku === 'PW-TREAT-004').barcode, undefined);
 });
 
@@ -128,8 +128,11 @@ test('importItems upserts, records the import and tracks stock transitions', asy
 
   const second = await importItems([item('A', 0), item('B', 4), item('C', 2, { priceCents: 2199 })], { source: SRC, errors: [{ row: 9, error: 'pre-parse' }] });
   assert.equal(second.created, 0);
-  assert.equal(second.updated, 2);
-  assert.equal(second.unchanged, 1);
+  assert.equal(second.updated, 3);
+  assert.equal(second.unchanged, 0);
+  const third = await importItems([item('C', 2, { priceCents: 2199 })], { source: SRC });
+  assert.equal(third.unchanged, 1);
+  assert.equal(third.changedSkus.length, 0);
   assert.deepEqual(second.wentOutOfStock, [sku('A')]);
   assert.deepEqual(second.backInStock, [sku('B')]);
   assert.equal(second.status, 'partial');
