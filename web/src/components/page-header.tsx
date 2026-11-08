@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-interface PageHeaderProps extends React.ComponentProps<"header"> {
+interface PageHeaderProps extends Omit<React.ComponentProps<"header">, "title"> {
   title: React.ReactNode;
   description?: React.ReactNode;
   /** Small label above the title (e.g. "Settings"). */

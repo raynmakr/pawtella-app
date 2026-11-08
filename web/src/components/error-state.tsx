@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/lib/api";
 
-interface ErrorStateProps extends React.ComponentProps<"div"> {
+interface ErrorStateProps extends Omit<React.ComponentProps<"div">, "title"> {
   title?: React.ReactNode;
   error?: unknown;
   description?: React.ReactNode;

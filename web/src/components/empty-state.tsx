@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { PawIcon } from "./logo";
 
-interface EmptyStateProps extends React.ComponentProps<"div"> {
+interface EmptyStateProps extends Omit<React.ComponentProps<"div">, "title"> {
   icon?: React.ReactNode;
   title: React.ReactNode;
   description?: React.ReactNode;
