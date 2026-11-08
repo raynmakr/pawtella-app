@@ -82,7 +82,7 @@ export default route({
     const intent = INTENTS.includes(out?.intent) ? out.intent : 'search';
     const queryText = typeof out?.query === 'string' && out.query.trim() ? out.query.trim().slice(0, 80) : keywords(message);
     const products = handles.map((h) => candidates.find((p) => p.handle === h)).filter(Boolean);
-    const reply = typeof out?.reply === 'string' && out.reply.trim() && out.reply !== 'mock'
+    const reply = !claude.isMock && typeof out?.reply === 'string' && out.reply.trim()
       ? out.reply.trim()
       : products.length
         ? `Here are a few picks${pet ? ` for ${pet.name}` : ''}: ${products.map((p) => p.title).join(', ')}.`

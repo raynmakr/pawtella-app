@@ -1,6 +1,6 @@
 // /api/shop/* — catalog, cart, orders, fulfillment info. Catalog + cart proxy lib/shopify.js
 // (real Storefront API or the mock). Orders come from the shop_orders mirror.
-import { route, segments, body, badRequest, notFound, pagination } from '../lib/http.js';
+import { route, segments, body, badRequest, notFound, pagination, pathname } from '../lib/http.js';
 import { optionalAuth, requireAuth } from '../lib/auth.js';
 import { one, many } from '../lib/db.js';
 import * as shopify from '../lib/shopify.js';
@@ -121,8 +121,8 @@ async function get(req) {
     const [stock, reviews] = await Promise.all([stockState(handle), reviewsSummary(handle)]);
     return { product: { ...product, stock, reviews } };
   }
-  if (head === 'cart' && seg.length === 2) {
-    const cart = await shopify.cartGet(decodeURIComponent(second));
+  if (head === 'cart' && seg.length >= 2) {
+    const cart = await shopify.cartGet(cartIdFromUrl(req));
     if (!cart) throw notFound('Cart not found');
     return { cart };
   }
@@ -172,10 +172,10 @@ async function post(req) {
 
 async function patch(req) {
   const seg = segments(req, BASE);
-  if (seg[0] === 'cart' && seg.length === 2) {
+  if (seg[0] === 'cart' && seg.length >= 2) {
     const b = body(req);
     if (!Array.isArray(b.lines)) throw badRequest('lines must be an array of { id, quantity }');
-    const cartId = decodeURIComponent(seg[1]);
+    const cartId = cartIdFromUrl(req);
     const lines = b.lines.map((l) => {
       if (!l?.id) throw badRequest('Each line needs id');
       return { id: l.id, quantity: parseInt(l.quantity, 10) };
@@ -188,10 +188,10 @@ async function patch(req) {
 
 async function del(req) {
   const seg = segments(req, BASE);
-  if (seg[0] === 'cart' && seg.length === 3 && seg[2] === 'lines') {
+  if (seg[0] === 'cart' && seg.length >= 3 && seg[seg.length - 1] === 'lines') {
     const b = body(req);
     if (!Array.isArray(b.lineIds) || !b.lineIds.length) throw badRequest('lineIds required');
-    const cart = await shopify.cartLinesRemove(decodeURIComponent(seg[1]), b.lineIds);
+    const cart = await shopify.cartLinesRemove(cartIdFromUrl(req), b.lineIds);
     return { cart };
   }
   throw notFound();

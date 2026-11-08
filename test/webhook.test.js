@@ -1,7 +1,6 @@
 // Shopify webhook: HMAC verification, idempotent replay, orders/paid side effects, fulfillment detection,
 // pack grants, GDPR redact. Runs the handler in-process with a fake req/res (no network).
-import '../scripts/load-env.js';
-process.env.SHOPIFY_WEBHOOK_SECRET ||= 'test-webhook-secret';
+import './helpers/shopify-webhook-env.js';
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { query, one, many, closePool } from '../lib/db.js';
