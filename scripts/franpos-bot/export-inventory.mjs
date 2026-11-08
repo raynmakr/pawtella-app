@@ -172,7 +172,7 @@ async function runStep(page, step, cfg) {
 }
 
 /** In --record mode: dump candidate selectors for inputs, buttons and links so the owner can fill config.json. */
-async function recordElements(page, label) {
+async function recordElements(page, label, outDir = OUT_DIR) {
   const info = await page.evaluate(() => {
     const desc = (el) => ({
       tag: el.tagName.toLowerCase(),
@@ -192,8 +192,8 @@ async function recordElements(page, label) {
       tables: [...document.querySelectorAll('table')].map((t) => ({ id: t.id || undefined, className: t.className || undefined, rows: t.rows.length })),
     };
   });
-  fs.writeFileSync(path.join(OUT_DIR, `elements-${label}.json`), JSON.stringify(info, null, 2));
-  await page.screenshot({ path: path.join(OUT_DIR, `step-${label}.png`), fullPage: true }).catch(() => {});
+  fs.writeFileSync(path.join(outDir, `elements-${label}.json`), JSON.stringify(info, null, 2));
+  await page.screenshot({ path: path.join(outDir, `step-${label}.png`), fullPage: true }).catch(() => {});
 }
 
 /**
@@ -232,7 +232,7 @@ export async function runExport({
   const page = await context.newPage();
   page.setDefaultTimeout(cfg.navigationTimeoutMs);
   let step = 'start';
-  const snap = async (label) => record && recordElements(page, label).catch(() => {});
+  const snap = async (label) => record && recordElements(page, label, outDir).catch(() => {});
 
   try {
     // 1. Login
