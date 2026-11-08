@@ -1,10 +1,11 @@
 // Paw Points: GET /api/points, GET /api/points/transactions, POST /api/points/hold,
 // DELETE /api/points/hold/:id, GET /api/points/packs
-import { route, segments, body, badRequest, notFound, forbidden, pagination } from '../lib/http.js';
+import { route, segments, body, badRequest, notFound, forbidden, pagination, ApiError } from '../lib/http.js';
+import * as shopify from '../lib/shopify.js';
 import { one } from '../lib/db.js';
 import { requireAuth } from '../lib/auth.js';
 import { camelize } from '../lib/serialize.js';
-import { RULES, describeWays, maxRedeemablePoints } from '../lib/points-rules.js';
+import { RULES, describeWays, maxRedeemablePoints, validateRedeem } from '../lib/points-rules.js';
 import { getBalance, listTransactions, createHold, releaseHold } from '../lib/points.js';
 
 function rulesSummary() {
@@ -74,8 +75,19 @@ export default route({
     const points = Number(b.points);
     if (!Number.isInteger(points) || points <= 0) throw badRequest('points must be a positive integer');
 
-    // One active hold per cart: release a previous one so the user can change the amount.
-    const existing = await one(`SELECT id FROM point_holds WHERE user_id = $1 AND cart_id = $2 AND status = 'held'`, [userId, b.cartId]);
+    // One active hold per cart: a new amount replaces the previous hold. Validate against the cart
+    // first (counting the points the old hold would give back) so a rejected change keeps the old hold.
+    const existing = await one(`SELECT id, points FROM point_holds WHERE user_id = $1 AND cart_id = $2 AND status = 'held'`, [userId, b.cartId]);
+    if (typeof shopify.cartGet === 'function') {
+      const cart = await shopify.cartGet(b.cartId);
+      if (!cart) throw notFound('Cart not found');
+      const current = await getBalance(userId);
+      const check = validateRedeem({ points, subtotalCents: cart.subtotalCents ?? 0, balance: current.pawPoints + (existing?.points ?? 0) });
+      if (!check.ok) {
+        if (check.error === 'Not enough Paw Points') throw new ApiError(402, check.error, { needed: points, balance: current.pawPoints + (existing?.points ?? 0) });
+        throw badRequest(check.error, { max: check.max });
+      }
+    }
     if (existing) await releaseHold(existing.id);
 
     const hold = await createHold(userId, { cartId: b.cartId, points });
