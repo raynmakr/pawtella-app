@@ -1,0 +1,38 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    { "source": "/p/:id", "destination": "/api/p/:id" },
+    { "source": "/r/:code", "destination": "/api/r/:code" },
+    { "source": "/partners", "destination": "/api/partners-landing" },
+    { "source": "/api/auth/:path*", "destination": "/api/auth" },
+    { "source": "/api/users/:path*", "destination": "/api/users" },
+    { "source": "/api/pets/:path*", "destination": "/api/pets" },
+    { "source": "/api/points/:path*", "destination": "/api/points" },
+    { "source": "/api/ai/generate/:path*", "destination": "/api/ai/generate" },
+    { "source": "/api/ai/chat/:path*", "destination": "/api/ai/chat" },
+    { "source": "/api/shop/:path*", "destination": "/api/shop" },
+    { "source": "/api/posts/:path*", "destination": "/api/posts" },
+    { "source": "/api/challenges/:path*", "destination": "/api/challenges" },
+    { "source": "/api/notifications/:path*", "destination": "/api/notifications" },
+    { "source": "/api/partners/:path*", "destination": "/api/partners" },
+    { "source": "/api/inventory/:path*", "destination": "/api/inventory" },
+    { "source": "/api/admin/:path*", "destination": "/api/admin" },
+    { "source": "/api/reviews/:path*", "destination": "/api/reviews" }
+  ],
+  "crons": [
+    { "path": "/api/cron/finalize-generations", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/run-automations", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/sync-inventory", "schedule": "*/30 * * * *" },
+    { "path": "/api/cron/release-holds", "schedule": "0 * * * *" },
+    { "path": "/api/cron/close-challenges", "schedule": "5 4 * * *" },
+    { "path": "/api/cron/partner-tiers", "schedule": "15 4 * * *" },
+    { "path": "/api/cron/expire-points", "schedule": "30 4 * * *" },
+    { "path": "/api/cron/admin-digest", "schedule": "0 13 * * *" }
+  ]
+}
