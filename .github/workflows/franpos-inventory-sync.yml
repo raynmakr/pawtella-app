@@ -1,0 +1,49 @@
+# Hourly: log into the Franpos back office with Playwright, export the inventory CSV and post it to
+# POST /api/inventory/import. Alternative host: a Railway cron service running the same command
+# (see docs/INVENTORY_SYNC.md).
+name: Franpos inventory sync
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Export only, do not post to the API'
+        type: boolean
+        default: false
+
+concurrency:
+  group: franpos-inventory-sync
+  cancel-in-progress: false
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Export from Franpos and import
+        env:
+          CI: 'true'
+          FRANPOS_LOGIN_URL: ${{ secrets.FRANPOS_LOGIN_URL }}
+          FRANPOS_USERNAME: ${{ secrets.FRANPOS_USERNAME }}
+          FRANPOS_PASSWORD: ${{ secrets.FRANPOS_PASSWORD }}
+          FRANPOS_EXPORT_CONFIG: ${{ vars.FRANPOS_EXPORT_CONFIG || 'scripts/franpos-bot/config.example.json' }}
+          API_URL: ${{ secrets.API_URL }}
+          INVENTORY_IMPORT_SECRET: ${{ secrets.INVENTORY_IMPORT_SECRET }}
+        run: node scripts/franpos-bot/export-inventory.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
+      - name: Upload debug output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: franpos-bot-out
+          path: scripts/franpos-bot/out/
+          if-no-files-found: ignore
+          retention-days: 7

@@ -18,3 +18,6 @@ npm-debug.*
 
 # local scratch
 tmp/
+scripts/franpos-bot/out/*
+!scripts/franpos-bot/out/.gitkeep
+scripts/franpos-bot/config.json
