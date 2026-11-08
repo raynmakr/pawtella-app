@@ -39,6 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/stores/session";
 import { useUnreadCount } from "@/hooks/use-notifications";
+import { useCartCount } from "@/stores/cart";
 import { authService } from "@/services/auth";
 import { Logo, PawIcon } from "./logo";
 import { PointsPill } from "./points-pill";
@@ -97,7 +98,7 @@ export function CreateDrawer({ open, onOpenChange }: { open: boolean; onOpenChan
         <div className="grid gap-3 px-4 pb-6">
           <button
             type="button"
-            onClick={() => go("/create?mode=post")}
+            onClick={() => go("/post/new")}
             className="flex items-center gap-4 rounded-card bg-card p-4 text-left ring-1 ring-border transition hover:ring-primary/40 active:scale-[0.99]"
           >
             <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-teal-soft text-secondary">
@@ -110,7 +111,7 @@ export function CreateDrawer({ open, onOpenChange }: { open: boolean; onOpenChan
           </button>
           <button
             type="button"
-            onClick={() => go("/create?mode=studio")}
+            onClick={() => go("/studio")}
             className="flex items-center gap-4 rounded-card bg-card p-4 text-left ring-1 ring-border transition hover:ring-primary/40 active:scale-[0.99]"
           >
             <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-coral-soft text-primary">
@@ -230,7 +231,7 @@ function Sidebar({ onCreate }: { onCreate: () => void }) {
                 active ? "bg-coral-soft text-primary" : "text-foreground/80 hover:bg-muted hover:text-foreground",
               )}
             >
-              <item.icon className="size-[22px]" strokeWidth={active ? 2.4 : 2} />
+              <NavIcon item={item} active={active} className="size-[22px]" />
               {item.label}
             </Link>
           );
@@ -255,6 +256,22 @@ function Sidebar({ onCreate }: { onCreate: () => void }) {
         <UserMenu />
       </div>
     </aside>
+  );
+}
+
+/** Nav icon; the Shop item carries the cart item count. */
+function NavIcon({ item, active, className }: { item: NavItem; active: boolean; className: string }) {
+  const cartCount = useCartCount();
+  const badge = item.href === "/shop" ? cartCount : 0;
+  return (
+    <span className="relative inline-flex">
+      <item.icon className={className} strokeWidth={active ? 2.4 : 2} />
+      {badge > 0 && (
+        <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ring-2 ring-background">
+          {badge > 99 ? "99+" : badge}
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -318,7 +335,7 @@ function MobileTabBar({ onCreate }: { onCreate: () => void }) {
                 active ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <item.icon className="size-6" strokeWidth={active ? 2.4 : 2} />
+              <NavIcon item={item} active={active} className="size-6" />
               {item.label}
             </Link>
           );
