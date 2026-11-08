@@ -179,7 +179,7 @@ export function AddPetFlow() {
                           "flex h-20 flex-col items-center justify-center gap-1 rounded-2xl border-2 font-heading text-sm font-bold transition",
                           selected
                             ? "border-primary bg-coral-soft text-primary"
-                            : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                            : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",
                         )}
                       >
                         <Icon className="size-7" />
@@ -216,7 +216,7 @@ export function AddPetFlow() {
             {isSubmitting ? "Saving…" : "Save my pet"}
           </Button>
           {!isFirstPet && (
-            <Button type="button" variant="ghost" className="w-full" render={<Link href="/home" />}>
+            <Button type="button" variant="ghost" className="w-full" nativeButton={false} render={<Link href="/home" />}>
               Not now
             </Button>
           )}

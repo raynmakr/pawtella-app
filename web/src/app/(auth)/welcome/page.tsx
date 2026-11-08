@@ -67,7 +67,7 @@ export default function WelcomePage() {
               <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
                 <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
               </div>
-              <Button size="lg" className="w-full" render={<Link href="/login" />}>
+              <Button size="lg" className="w-full" nativeButton={false} render={<Link href="/login" />}>
                 Continue with email
               </Button>
             </div>

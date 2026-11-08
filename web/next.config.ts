@@ -7,7 +7,10 @@ const API_URL = (process.env.API_URL ?? "http://localhost:3000").replace(/\/$/, 
 const nextConfig: NextConfig = {
   // Authenticated pages are dynamic; keep the simpler rendering model for now.
   cacheComponents: false,
+  devIndicators: { position: "bottom-right" },
   turbopack: {
+    // Two lockfiles exist (repo root + web/); pin the root so Turbopack doesn't guess.
+    root: __dirname,
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],

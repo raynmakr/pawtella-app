@@ -29,6 +29,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -170,17 +171,18 @@ function UserMenu() {
         </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top" sideOffset={8} className="w-56 rounded-2xl p-1.5">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">{user?.email ?? "Signed in"}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/profile" />}>
-          <UserRoundIcon /> Profile
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/inbox" />}>
-          <InboxIcon /> Inbox
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/settings" />}>
-          <SettingsIcon /> Settings
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs text-muted-foreground">{user?.email ?? "Signed in"}</DropdownMenuLabel>
+          <DropdownMenuItem nativeButton={false} render={<Link href="/profile" />}>
+            <UserRoundIcon /> Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem nativeButton={false} render={<Link href="/inbox" />}>
+            <InboxIcon /> Inbox
+          </DropdownMenuItem>
+          <DropdownMenuItem nativeButton={false} render={<Link href="/settings" />}>
+            <SettingsIcon /> Settings
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={() => void signOut()}>
           <LogOutIcon /> Sign out
