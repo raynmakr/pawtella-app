@@ -78,6 +78,21 @@ async function buyerContext(req) {
   return { attributes: { pawtella_user_id: String(auth.userId) }, buyerEmail: user?.email || undefined, userId: auth.userId };
 }
 
+/**
+ * Cart ids are GIDs (`gid://shopify/Cart/<token>?key=…`) whose slashes the `:path*` rewrite splits,
+ * so read the id from the raw URL: /api/shop/cart/<id>[/lines].
+ */
+function cartIdFromUrl(req) {
+  const p = pathname(req);
+  const m = p.match(/\/api\/shop\/cart\/(.+?)(\/lines)?$/);
+  if (!m) throw badRequest('Missing cart id');
+  try {
+    return decodeURIComponent(m[1]);
+  } catch {
+    return m[1];
+  }
+}
+
 function normalizeLines(lines) {
   if (!Array.isArray(lines)) throw badRequest('lines must be an array');
   return lines.map((l) => {
