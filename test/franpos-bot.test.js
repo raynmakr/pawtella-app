@@ -53,19 +53,6 @@ before(async () => {
         res.end();
       });
     }
-    if (!authed) {
-      res.writeHead(302, { Location: '/login' });
-      return res.end();
-    }
-    if (url.pathname === '/dashboard') return res.end(page(`<nav id="main"><a href="/report">Inventory</a><a href="/logout">Logout</a></nav><h1>Dashboard</h1>`));
-    if (url.pathname === '/report') {
-      return res.end(page(`<nav id="main"></nav><select id="location"><option value="1">Downtown</option><option value="2">Toronto Depot</option></select>
-        <a id="export" href="/export.csv" download="inventory.csv">Export CSV</a>${tableHtml()}`));
-    }
-    if (url.pathname === '/export.csv') {
-      res.writeHead(200, { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="inventory.csv"' });
-      return res.end(sampleCsv);
-    }
     if (url.pathname === '/api/inventory/import' && req.method === 'POST') {
       let body = '';
       req.on('data', (c) => (body += c));
@@ -78,6 +65,19 @@ before(async () => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true, imported: { rowCount: body.trim().split('\n').length - 1, created: 1, updated: 2, unchanged: 0, wentOutOfStock: [], backInStock: [], errors: [] }, pushed: { created: 1, updated: 2, failed: 0 } }));
       });
+    }
+    if (!authed) {
+      res.writeHead(302, { Location: '/login' });
+      return res.end();
+    }
+    if (url.pathname === '/dashboard') return res.end(page(`<nav id="main"><a href="/report">Inventory</a><a href="/logout">Logout</a></nav><h1>Dashboard</h1>`));
+    if (url.pathname === '/report') {
+      return res.end(page(`<nav id="main"></nav><select id="location"><option value="1">Downtown</option><option value="2">Toronto Depot</option></select>
+        <a id="export" href="/export.csv" download="inventory.csv">Export CSV</a>${tableHtml()}`));
+    }
+    if (url.pathname === '/export.csv') {
+      res.writeHead(200, { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="inventory.csv"' });
+      return res.end(sampleCsv);
     }
     res.writeHead(404);
     res.end();
