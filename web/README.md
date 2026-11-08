@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pawtella web
 
-## Getting Started
+The Phase 1 client: a Next.js (App Router) app in `web/`. It talks to the Pawtella API (`api/` + `lib/`
+at the repo root) only through its own BFF proxy, so the browser never sees the API host or the JWT.
 
-First, run the development server:
+## Run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. API (repo root), mock mode works without provider keys
+cd .. && PORT=3000 npm run dev
+
+# 2. Web
+cp .env.example .env.local      # API_URL=http://localhost:3000
+npm install
+npm run dev -- --port 3100
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Checks: `npm run lint`, `npx tsc --noEmit`, `npm run build`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Layout
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/app/                 routes (App Router)
+  page.tsx               / → redirect to /home or /welcome
+  (auth)/                welcome, login, register, forgot, reset   (public; signed-in users → /home)
+  onboarding/add-pet     first pet + Paw Points celebration
+  (app)/                 authenticated shell: home, ask, create, shop, profile, inbox, points, settings
+  api/[...path]/route.ts BFF proxy → ${API_URL}/api/*  (cookie ↔ Bearer token)
+  api/session/route.ts   GET { user, pets }
+src/components/          app-shell, logo, points-pill, page-header, empty/error states, skeletons, avatars
+src/components/ui/       shadcn/ui primitives (Base UI flavour), tuned to the Pawtella tokens
+src/lib/                 api.ts (client fetch), server-api.ts, session.ts (server), query-keys, format, referral
+src/services/            one typed module per API area (auth, users, pets, upload, notifications, points)
+src/stores/session.ts    zustand session snapshot + useSession()
+src/hooks/               use-me, use-points, use-notifications
+src/types/               API JSON shapes (camelCase)
+```
 
-## Learn More
+## Conventions
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Design tokens live in `src/app/globals.css` (light on `:root`, dark on `.dark`), mapped into Tailwind
+  (`bg-primary`, `text-points`, `bg-coral-soft`, `rounded-card`, `shadow-soft`, `font-heading`…). No hard-coded colors in pages.
+- Client components fetch with `api()` + React Query (`queryKeys`). Server components use `serverApi()` / `getServerSession()`.
+- Every list shows a skeleton, an empty state and an error state with retry (`ListSkeleton`, `EmptyState`, `ErrorState`).
+- Auth state: `useSession()` (zustand). After a login/register call `hydrate()` or `refresh()`.
+- Landing pages the API renders (`/p/:id`, `/r/:code`, `/partners`, `/mock-checkout/:cartId`) are rewritten to the API in `next.config.ts`.
