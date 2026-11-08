@@ -4,12 +4,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ------------------------------------------------------------------------------------------
+   Pawtella design tokens. Light values live on :root, dark values on .dark (set by next-themes)
+   and on prefers-color-scheme when no explicit theme class is present.
+   ------------------------------------------------------------------------------------------ */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-nunito), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -27,6 +32,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -39,95 +45,159 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  /* Pawtella extras */
+  --color-points: var(--points);
+  --color-points-foreground: var(--points-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-coral-soft: var(--coral-soft);
+  --color-teal-soft: var(--teal-soft);
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: calc(var(--radius) * 1.25);
+  --radius-2xl: var(--radius-card);
+  --radius-3xl: calc(var(--radius-card) * 1.25);
+  --radius-4xl: calc(var(--radius-card) * 1.5);
+  --radius-card: var(--radius-card);
+
+  --shadow-soft: 0 1px 2px rgb(31 27 22 / 0.04), 0 8px 24px -12px rgb(31 27 22 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(31 27 22 / 0.06), 0 16px 40px -16px rgb(255 107 74 / 0.35);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 16px;
+  --radius-card: 24px;
+
+  --background: #fff8f1;
+  --foreground: #1f1b16;
+  --card: #ffffff;
+  --card-foreground: #1f1b16;
+  --popover: #ffffff;
+  --popover-foreground: #1f1b16;
+  --primary: #ff6b4a;
+  --primary-foreground: #ffffff;
+  --secondary: #0e7c7b;
+  --secondary-foreground: #ffffff;
+  --muted: #fff1e6;
+  --muted-foreground: #6b625a;
+  --accent: #fff3dc;
+  --accent-foreground: #1f1b16;
+  --destructive: #e5484d;
+  --destructive-foreground: #ffffff;
+  --border: #eedfd3;
+  --input: #eedfd3;
+  --ring: #ff6b4a;
+  --points: #f5a623;
+  --points-foreground: #3a2a05;
+  --success: #2bb673;
+  --success-foreground: #ffffff;
+  --coral-soft: #ffe6df;
+  --teal-soft: #dff3f2;
+
+  --chart-1: #ff6b4a;
+  --chart-2: #0e7c7b;
+  --chart-3: #f5a623;
+  --chart-4: #2bb673;
+  --chart-5: #6b625a;
+
+  --sidebar: #fff8f1;
+  --sidebar-foreground: #1f1b16;
+  --sidebar-primary: #ff6b4a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #fff1e6;
+  --sidebar-accent-foreground: #1f1b16;
+  --sidebar-border: #eedfd3;
+  --sidebar-ring: #ff6b4a;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #15120f;
+  --foreground: #fbf5ef;
+  --card: #1f1b17;
+  --card-foreground: #fbf5ef;
+  --popover: #1f1b17;
+  --popover-foreground: #fbf5ef;
+  --primary: #ff7a5c;
+  --primary-foreground: #1f1b16;
+  --secondary: #2ba8a6;
+  --secondary-foreground: #0b1f1f;
+  --muted: #2a241f;
+  --muted-foreground: #bdb2a8;
+  --accent: #2a241f;
+  --accent-foreground: #fbf5ef;
+  --destructive: #ff6b6f;
+  --destructive-foreground: #1f1b16;
+  --border: #352e28;
+  --input: #352e28;
+  --ring: #ff7a5c;
+  --points: #ffb84d;
+  --points-foreground: #2a1c00;
+  --success: #3ccb84;
+  --success-foreground: #06200f;
+  --coral-soft: #3a241e;
+  --teal-soft: #15302f;
+
+  --sidebar: #15120f;
+  --sidebar-foreground: #fbf5ef;
+  --sidebar-primary: #ff7a5c;
+  --sidebar-primary-foreground: #1f1b16;
+  --sidebar-accent: #2a241f;
+  --sidebar-accent-foreground: #fbf5ef;
+  --sidebar-border: #352e28;
+  --sidebar-ring: #ff7a5c;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading font-extrabold tracking-tight;
   }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
   }
-  html {
-    @apply font-sans;
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 25%, transparent);
   }
 }
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Confetti-lite used by the onboarding celebration */
+@keyframes confetti-fall {
+  0% { transform: translate3d(0, -20px, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate3d(var(--drift, 0px), 360px, 0) rotate(var(--spin, 540deg)); opacity: 0; }
+}
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 14px;
+  border-radius: 3px;
+  animation: confetti-fall var(--dur, 2.4s) cubic-bezier(0.2, 0.7, 0.3, 1) var(--delay, 0s) infinite;
+}
+@keyframes pop-in {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop-in { animation: pop-in 600ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
