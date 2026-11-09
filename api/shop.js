@@ -6,6 +6,11 @@ import { one, many } from '../lib/db.js';
 import * as shopify from '../lib/shopify.js';
 import { listOrdersForUser, getOrderForUser, toApiOrder } from '../lib/orders.js';
 import { track, EVENT } from '../lib/events.js';
+import { env } from '../lib/env.js';
+import { gid } from '../lib/shopify-client.js';
+
+// Real Toronto depot (891 College St). Prefer the configured location, fall back to the known id.
+const DEPOT_LOCATION_ID = gid('Location', env.shopify.depotLocationId || '115648397619');
 
 const BASE = '/api/shop';
 
@@ -21,7 +26,7 @@ export const DEFAULT_FULFILLMENT = {
     // Approximate (College St at Ossington). Confirm and override via app_settings 'fulfillment'.
     lat: 43.6545,
     lng: -79.4228,
-    shopifyLocationId: 'gid://shopify/Location/115648397619',
+    shopifyLocationId: DEPOT_LOCATION_ID,
     mapsUrl: 'https://maps.google.com/?q=891+College+St,+Toronto,+ON+M6H+1A1',
   },
   // Opening hours, fees and delivery windows are set in Shopify and not yet confirmed here.

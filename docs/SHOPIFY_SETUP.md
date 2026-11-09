@@ -156,6 +156,13 @@ pack portion of an order (`lib/orders.js` subtracts pack lines from the cash sub
 
 ## 7. Webhook subscriptions
 
+Webhook (and compliance) subscriptions are now **app-managed**: they live in the repo-root
+`shopify.app.toml` (`[webhooks]` block, API version 2026-10, all pointing at
+`https://pawtella-app.vercel.app/api/webhooks/shopify`) and are published with `shopify app deploy`
+(currently version `pawtella-api-3`). Editing them there and redeploying is the source of truth —
+you no longer need to create them by hand in the admin UI. The manual steps below remain valid if you
+ever manage subscriptions outside the app config.
+
 Settings → Notifications → **Webhooks** → Create webhook, format JSON, API version 2026-10, URL
 `https://<APP_URL>/api/webhooks/shopify` for each topic:
 

@@ -1,0 +1,26 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "871721a395d4701c0a70afa9e9ffaead"
+name = "Pawtella API"
+application_url = "https://pawtella-app.vercel.app"
+embedded = false
+
+[webhooks]
+api_version = "2026-10"
+
+  [[webhooks.subscriptions]]
+  topics = [ "orders/paid", "orders/updated", "orders/fulfilled", "orders/cancelled", "inventory_levels/update", "fulfillments/update" ]
+  uri = "https://pawtella-app.vercel.app/api/webhooks/shopify"
+
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
+  uri = "https://pawtella-app.vercel.app/api/webhooks/shopify"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,write_customers,read_discounts,write_discounts,read_gift_cards,write_gift_cards,write_inventory,read_inventory,read_locations,read_orders,read_products,write_products,unauthenticated_write_checkouts,unauthenticated_read_checkouts,unauthenticated_write_customers,unauthenticated_read_customers,unauthenticated_read_product_inventory,unauthenticated_read_product_listings,unauthenticated_read_product_tags,unauthenticated_read_selling_plans,unauthenticated_read_content,read_fulfillments"
+optional_scopes = [ ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [ ]
