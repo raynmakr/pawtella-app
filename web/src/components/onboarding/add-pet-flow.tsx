@@ -66,8 +66,13 @@ export function AddPetFlow() {
     try {
       let photoUrl: string | undefined;
       if (photo) {
-        const asset = await uploadFile(photo.file, { kind: "image", folder: "pets" });
-        photoUrl = asset.secureUrl || asset.url;
+        try {
+          const asset = await uploadFile(photo.file, { kind: "image", folder: "pets" });
+          photoUrl = asset.secureUrl || asset.url;
+        } catch {
+          // The photo is optional here — save the pet anyway rather than blocking onboarding.
+          toast.warning("We couldn't upload that photo, so we saved the rest. You can add one later.");
+        }
       }
       const res = await petsService.create({
         name: values.name,

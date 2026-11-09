@@ -43,11 +43,17 @@ export function ReviewDialog({ open, onOpenChange, productHandle, productTitle, 
     mutationFn: async () => {
       let photoUrl: string | undefined;
       if (photo) {
-        const asset = await uploadFile(photo.file, { kind: "image", folder: "reviews" });
-        photoUrl = asset.secureUrl || asset.url;
-        // The API only stores http(s) URLs. The dev mock uploader returns a data URL, so stand in a
-        // hosted placeholder (real Cloudinary uploads always return https).
-        if (!/^https?:\/\//.test(photoUrl)) photoUrl = `https://placedog.net/480/480?random=${Date.now() % 1000}`;
+        try {
+          const asset = await uploadFile(photo.file, { kind: "image", folder: "reviews" });
+          photoUrl = asset.secureUrl || asset.url;
+          // The API only stores http(s) URLs. The mock uploader returns a data URL, so stand in a
+          // hosted placeholder (real Cloudinary uploads always return https).
+          if (!/^https?:\/\//.test(photoUrl)) photoUrl = `https://placedog.net/480/480?random=${Date.now() % 1000}`;
+        } catch {
+          // The photo is a bonus, not a requirement — still post the review without it.
+          photoUrl = undefined;
+          toast.warning("We couldn't upload your photo, so we posted the review without it.");
+        }
       }
       return reviewsService.create({ productHandle, orderId, rating, body: text.trim() || undefined, photoUrl, petId: primaryPet?.id });
     },

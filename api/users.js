@@ -1,6 +1,7 @@
 // Users: GET/PATCH /api/users/me, POST /api/users/me/push-token,
 //        GET /api/users/:handle, GET /api/users/:handle/posts
 import { route, segments, body, badRequest, notFound, intParam } from '../lib/http.js';
+import { MOCK_UPLOAD_MAX_BYTES } from '../lib/media.js';
 import { query, one, many } from '../lib/db.js';
 import { requireAuth, optionalAuth } from '../lib/auth.js';
 import { getUserById, getUserByHandle, toPublicUser, toPrivateUser, maybeAwardProfilePetBonus } from '../lib/users.js';
@@ -38,7 +39,8 @@ async function patchMe(req) {
   if (displayName !== undefined) fields.display_name = displayName ? displayName.replace(/\s+/g, ' ') : null;
   const bio = optStr(b.bio, 300, 'bio');
   if (bio !== undefined) fields.bio = bio;
-  const avatarUrl = optStr(b.avatarUrl, 2048, 'avatarUrl');
+  // Large cap: in mock mode (no Cloudinary) the uploader returns an inline data: image URL (allowed below).
+  const avatarUrl = optStr(b.avatarUrl, MOCK_UPLOAD_MAX_BYTES, 'avatarUrl');
   if (avatarUrl !== undefined) {
     if (avatarUrl && !/^(https?:\/\/|data:image\/)/i.test(avatarUrl)) throw badRequest('avatarUrl must be a URL');
     fields.avatar_url = avatarUrl;

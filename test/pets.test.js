@@ -144,6 +144,21 @@ test('pets CRUD with primary-pet logic', async () => {
   assert.equal(nothing.status, 400);
 });
 
+test('mock-mode data-URL photos persist end to end (pets.photoUrl + users.avatarUrl)', async () => {
+  // The mock uploader echoes a data URL far longer than the old 2048 cap; the save must still work.
+  const { token } = await registerUser();
+  const dataUrl = 'data:image/jpeg;base64,' + '/9j/4AAQSkZJRg'.repeat(1000); // ~14k chars
+  assert.ok(dataUrl.length > 2048 && dataUrl.length <= media.MOCK_UPLOAD_MAX_BYTES);
+
+  const created = await call(petsHandler, 'POST', '/api/pets', { token, body: { name: 'Pixel', species: 'cat', photoUrl: dataUrl } });
+  assert.equal(created.status, 200, JSON.stringify(created.body).slice(0, 160));
+  assert.equal(created.body.pet.photoUrl, dataUrl, 'data URL stored and returned for display');
+
+  const avatar = await call(usersHandler, 'PATCH', '/api/users/me', { token, body: { avatarUrl: dataUrl } });
+  assert.equal(avatar.status, 200, JSON.stringify(avatar.body).slice(0, 160));
+  assert.equal(avatar.body.user.avatarUrl, dataUrl, 'data URL avatar stored and returned');
+});
+
 test('profile + first pet bonus is awarded once, whichever comes last', async () => {
   const { token, user } = await registerUser({ displayName: 'Bonus Hunter' });
   const start = user.pawPoints;
@@ -256,6 +271,10 @@ test('upload: signed params in mock mode and the dev mock uploader', async () =>
   assert.match(up.body.publicId, /^mock\/[0-9a-f]{16}$/);
   const notData = await call(uploadHandler, 'POST', '/api/upload/mock', { token, body: { dataUrl: 'https://example.com/x.png' } });
   assert.equal(notData.status, 400);
+  // Oversized data URLs are rejected with 413, not silently stored.
+  const huge = 'data:image/png;base64,' + 'A'.repeat(media.MOCK_UPLOAD_MAX_BYTES + 10);
+  const tooBig = await call(uploadHandler, 'POST', '/api/upload/mock', { token, body: { dataUrl: huge } });
+  assert.equal(tooBig.status, 413, JSON.stringify(tooBig.body).slice(0, 120));
 
   // Mock-mode URL helpers pass the input through.
   assert.equal(media.watermarkedUrl({ publicId: 'https://x/y.mp4', resourceType: 'video', handle: 'rex' }), 'https://x/y.mp4');

@@ -101,8 +101,14 @@ export function PetForm({ pet }: { pet?: Pet }) {
     try {
       let photoUrl: string | null | undefined = undefined;
       if (photo) {
-        const asset = await uploadFile(photo.file, { kind: "image", folder: "pets" });
-        photoUrl = asset.secureUrl || asset.url;
+        try {
+          const asset = await uploadFile(photo.file, { kind: "image", folder: "pets" });
+          photoUrl = asset.secureUrl || asset.url;
+        } catch {
+          // Don't lose the whole save over a photo: keep any existing photo (edit) or none (create).
+          photoUrl = isEdit ? undefined : null;
+          toast.warning("We couldn't upload that photo, so we saved the rest. You can add a photo again later.");
+        }
       } else if (removePhoto) {
         photoUrl = null;
       }

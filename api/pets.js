@@ -1,5 +1,6 @@
 // Pets: GET/POST /api/pets, GET/PATCH/DELETE /api/pets/:id
 import { route, segments, body, requireFields, badRequest, notFound } from '../lib/http.js';
+import { MOCK_UPLOAD_MAX_BYTES } from '../lib/media.js';
 import { withTransaction, many, one } from '../lib/db.js';
 import { requireAuth } from '../lib/auth.js';
 import { maybeAwardProfilePetBonus } from '../lib/users.js';
@@ -72,7 +73,8 @@ function validatePet(b, { partial = false } = {}) {
       out.weight_kg = Math.round(w * 100) / 100;
     }
   }
-  const photoUrl = optStr(b.photoUrl, 2048, 'photoUrl');
+  // Large cap: in mock mode (no Cloudinary) the uploader returns an inline data URL, not a short https URL.
+  const photoUrl = optStr(b.photoUrl, MOCK_UPLOAD_MAX_BYTES, 'photoUrl');
   if (photoUrl !== undefined) out.photo_url = photoUrl;
   const notes = optStr(b.notes, 2000, 'notes');
   if (notes !== undefined) out.notes = notes;
