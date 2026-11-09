@@ -8,7 +8,7 @@ import { listOrdersForUser, getOrderForUser, toApiOrder } from '../lib/orders.js
 import { getStockState } from '../lib/inventory/sync.js';
 import { track, EVENT } from '../lib/events.js';
 import { env } from '../lib/env.js';
-import { gid } from '../lib/shopify-client.js';
+import { gid, isCartId } from '../lib/shopify-client.js';
 
 // Real Toronto depot (891 College St). Prefer the configured location, fall back to the known id.
 const DEPOT_LOCATION_ID = gid('Location', env.shopify.depotLocationId || '115648397619');
@@ -98,6 +98,28 @@ function cartIdFromUrl(req) {
   }
 }
 
+/**
+ * A cart lookup/mutation failure that means the id no longer resolves (malformed, expired, or
+ * consumed by a completed checkout) — as opposed to a transient outage we must not paper over by
+ * silently discarding a real cart. Covers the mock's 404 and the Storefront `ID!` coercion error.
+ */
+export function isStaleCartError(err) {
+  const status = err?.status;
+  if (status === 429 || status === 503) return false;
+  if (status === 404) return true;
+  return /invalid value|invalid id|not found|does not exist|no such cart/i.test(err?.message || '');
+}
+
+/** Start a brand-new cart (empty unless `lines` are given), carrying over the buyer context. */
+async function newCart(req, lines = [], ctx) {
+  ctx = ctx || (await buyerContext(req));
+  const cart = await shopify.cartCreate({ lines, buyerEmail: ctx.buyerEmail, attributes: ctx.attributes });
+  if (lines.length) {
+    await track(EVENT.checkout_started, { userId: ctx.userId, props: { cartId: cart.id, lines: lines.length, subtotalCents: cart.subtotalCents } });
+  }
+  return cart;
+}
+
 function normalizeLines(lines) {
   if (!Array.isArray(lines)) throw badRequest('lines must be an array');
   return lines.map((l) => {
@@ -127,9 +149,19 @@ async function get(req) {
     return { product: { ...product, stock, reviews } };
   }
   if (head === 'cart' && seg.length >= 2) {
-    const cart = await shopify.cartGet(cartIdFromUrl(req));
-    if (!cart) throw notFound('Cart not found');
-    return { cart };
+    const id = cartIdFromUrl(req);
+    let cart = null;
+    if (isCartId(id)) {
+      try {
+        cart = await shopify.cartGet(id);
+      } catch (err) {
+        if (!isStaleCartError(err)) throw err;
+        console.warn('[shop] cart lookup failed; issuing a fresh cart', { error: err?.message });
+      }
+    }
+    if (cart) return { cart };
+    // Self-heal: a missing/invalid/checked-out cart becomes a fresh empty cart, never an error.
+    return { cart: await newCart(req), reset: true };
   }
   if (head === 'orders') {
     const { userId } = await requireAuth(req);
@@ -159,18 +191,23 @@ async function post(req) {
     const b = body(req);
     const lines = normalizeLines(b.lines ?? []);
     const ctx = await buyerContext(req);
-    let cart;
-    if (b.cartId) {
-      cart = await shopify.cartLinesAdd(b.cartId, lines);
-      if (ctx.userId && !cart.attributes?.pawtella_user_id) {
+    let cart = null;
+    if (b.cartId && isCartId(b.cartId)) {
+      try {
+        cart = await shopify.cartLinesAdd(b.cartId, lines);
+      } catch (err) {
+        if (!isStaleCartError(err)) throw err;
+        cart = null; // the saved cart is gone — fall through and start a new one with the same lines
+      }
+      if (cart && ctx.userId && !cart.attributes?.pawtella_user_id) {
         cart = await shopify.cartAttributesUpdate(b.cartId, ctx.attributes);
         if (ctx.buyerEmail && !cart.buyerEmail) cart = await shopify.cartBuyerIdentityUpdate(b.cartId, { email: ctx.buyerEmail });
       }
-    } else {
-      cart = await shopify.cartCreate({ lines, buyerEmail: ctx.buyerEmail, attributes: ctx.attributes });
-      await track(EVENT.checkout_started, { userId: ctx.userId, props: { cartId: cart.id, lines: lines.length, subtotalCents: cart.subtotalCents } });
     }
-    return { cart };
+    if (cart) return { cart };
+    // No cart, or the given one no longer resolves: create one carrying the requested lines.
+    cart = await newCart(req, lines, ctx);
+    return b.cartId ? { cart, reset: true } : { cart };
   }
   throw notFound();
 }
@@ -185,8 +222,14 @@ async function patch(req) {
       if (!l?.id) throw badRequest('Each line needs id');
       return { id: l.id, quantity: parseInt(l.quantity, 10) };
     });
-    const cart = await shopify.cartLinesUpdate(cartId, lines);
-    return { cart };
+    if (isCartId(cartId)) {
+      try {
+        return { cart: await shopify.cartLinesUpdate(cartId, lines) };
+      } catch (err) {
+        if (!isStaleCartError(err)) throw err;
+      }
+    }
+    return { cart: await newCart(req), reset: true };
   }
   throw notFound();
 }
@@ -196,8 +239,15 @@ async function del(req) {
   if (seg[0] === 'cart' && seg.length >= 3 && seg[seg.length - 1] === 'lines') {
     const b = body(req);
     if (!Array.isArray(b.lineIds) || !b.lineIds.length) throw badRequest('lineIds required');
-    const cart = await shopify.cartLinesRemove(cartIdFromUrl(req), b.lineIds);
-    return { cart };
+    const cartId = cartIdFromUrl(req);
+    if (isCartId(cartId)) {
+      try {
+        return { cart: await shopify.cartLinesRemove(cartId, b.lineIds) };
+      } catch (err) {
+        if (!isStaleCartError(err)) throw err;
+      }
+    }
+    return { cart: await newCart(req), reset: true };
   }
   throw notFound();
 }

@@ -46,6 +46,10 @@ const HOP_BY_HOP = new Set([
 async function proxy(req: NextRequest, ctx: Ctx): Promise<Response> {
   const { path } = await ctx.params;
   const joined = (path ?? []).join("/");
+  // Next.js decodes catch-all segments, so re-encode each one when rebuilding the upstream URL.
+  // Otherwise a cart id like `gid://shopify/Cart/c1-abc?key=def` loses its `?key=...` (the `?`
+  // becomes a live query delimiter) and the Storefront API rejects the truncated id.
+  const upstreamPath = (path ?? []).map(encodeURIComponent).join("/");
   const method = req.method.toUpperCase();
 
   // Local-only: there is no API logout; forgetting the cookie is the whole operation.
@@ -65,7 +69,7 @@ async function proxy(req: NextRequest, ctx: Ctx): Promise<Response> {
   headers.set("x-forwarded-host", req.nextUrl.host);
   headers.set("x-forwarded-proto", req.nextUrl.protocol.replace(":", ""));
 
-  const upstreamUrl = `${API_URL}/api/${joined}${req.nextUrl.search}`;
+  const upstreamUrl = `${API_URL}/api/${upstreamPath}${req.nextUrl.search}`;
   const init: RequestInit = { method, headers, redirect: "manual" };
   if (method !== "GET" && method !== "HEAD") {
     // Buffer the body: supports JSON and multipart alike without needing `duplex`.

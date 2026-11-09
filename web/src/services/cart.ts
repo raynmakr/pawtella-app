@@ -109,7 +109,11 @@ export function useCart() {
     queryFn: async () => {
       try {
         const { cart } = await cartService.get(cartId as string);
-        useCartStore.getState().setCount(countOf(cart));
+        const store = useCartStore.getState();
+        // The server self-heals a stale/invalid/checked-out id into a fresh cart: adopt the new id
+        // so the badge count matches and the next fetch reuses the healed cart (no churn).
+        if (cart.id !== store.cartId) store.setCartId(cart.id);
+        store.setCount(countOf(cart));
         return cart;
       } catch (err) {
         if (isApiError(err) && err.status === 404) {
