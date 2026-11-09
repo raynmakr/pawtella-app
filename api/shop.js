@@ -8,7 +8,7 @@ import { listOrdersForUser, getOrderForUser, toApiOrder } from '../lib/orders.js
 import { getStockState } from '../lib/inventory/sync.js';
 import { track, EVENT } from '../lib/events.js';
 import { env } from '../lib/env.js';
-import { gid, isCartId } from '../lib/shopify-client.js';
+import { gid, isCartId, decodeCartToken } from '../lib/shopify-client.js';
 
 // Real Toronto depot (891 College St). Prefer the configured location, fall back to the known id.
 const DEPOT_LOCATION_ID = gid('Location', env.shopify.depotLocationId || '115648397619');
@@ -84,18 +84,17 @@ async function buyerContext(req) {
 }
 
 /**
- * Cart ids are GIDs (`gid://shopify/Cart/<token>?key=…`) whose slashes the `:path*` rewrite splits,
- * so read the id from the raw URL: /api/shop/cart/<id>[/lines].
+ * Cart ids are GIDs (`gid://shopify/Cart/<token>?key=…`) full of reserved URL characters. The web
+ * client carries the id as a single base64url token segment — `/api/shop/cart/<token>[/lines]` —
+ * because a percent-encoded gid gets mangled by Vercel/Next path normalization (308 on `%2F`). The
+ * token has no reserved chars, so it arrives intact; `decodeCartToken` also accepts legacy raw or
+ * percent-encoded gids for back-compat.
  */
 function cartIdFromUrl(req) {
   const p = pathname(req);
   const m = p.match(/\/api\/shop\/cart\/(.+?)(\/lines)?$/);
   if (!m) throw badRequest('Missing cart id');
-  try {
-    return decodeURIComponent(m[1]);
-  } catch {
-    return m[1];
-  }
+  return decodeCartToken(m[1]);
 }
 
 /**

@@ -7,8 +7,18 @@ import { queryKeys } from "@/lib/query-keys";
 import { useCartStore } from "@/stores/cart";
 import type { Cart, HoldResponse, PointsHold } from "@/types/shop";
 
-/** Cart GIDs contain slashes; the API reads the id from the raw URL, so encode it as one segment. */
-const cartPath = (id: string, suffix = "") => `/api/shop/cart/${encodeURIComponent(id)}${suffix}`;
+/**
+ * Cart GIDs (`gid://shopify/Cart/<t>?key=<k>`) are full of reserved URL characters. A percent-
+ * encoded gid in a path segment gets mangled by Vercel/Next path normalization (a 308 turns `%2F`
+ * back into `/` and collapses `//`), so the id arrives split with a slash dropped and the API
+ * self-heals it away. Carry it instead as an opaque base64url token with no reserved characters,
+ * which survives untouched; the API's `decodeCartToken` reverses this (and accepts legacy ids).
+ * Whatever id is already stored in the browser is encoded here, so existing carts keep working.
+ */
+function encodeCartToken(id: string): string {
+  return btoa(id).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+const cartPath = (id: string, suffix = "") => `/api/shop/cart/${encodeCartToken(id)}${suffix}`;
 
 export interface CartLineInput {
   variantId: string;

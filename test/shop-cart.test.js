@@ -5,7 +5,7 @@ import '../scripts/load-env.js';
 import { test, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { closePool } from '../lib/db.js';
-import { isCartId } from '../lib/shopify-client.js';
+import { isCartId, encodeCartToken } from '../lib/shopify-client.js';
 import * as shopify from '../lib/shopify.js';
 import shopRoute, { isStaleCartError } from '../api/shop.js';
 
@@ -39,6 +39,22 @@ async function call({ method = 'GET', seg, body }) {
 }
 
 const cartSeg = (id, suffix) => ['cart', id, ...(suffix ? [suffix] : [])];
+
+/**
+ * Invoke the route the way the web client now delivers a cart request: the id is carried as a
+ * single base64url token path segment (no reserved chars). This mirrors what reaches the API after
+ * Vercel/Next path normalization, which — unlike a percent-encoded gid — leaves the token intact.
+ */
+async function callToken({ method = 'GET', id, suffix, body }) {
+  const token = encodeCartToken(id);
+  const tail = suffix ? `/${suffix}` : '';
+  const url = `/api/shop/cart/${token}${tail}`;
+  const path = `cart/${token}${tail}`;
+  const req = { method, url, headers: {}, query: { path }, body, cookies: {}, socket: {} };
+  const res = makeRes();
+  await shopRoute(req, res);
+  return { status: res.statusCode, data: res.body ? JSON.parse(res.body) : undefined };
+}
 
 async function firstVariantId(handle = 'kong-classic-large') {
   const p = await shopify.getProduct(handle);
@@ -95,6 +111,38 @@ test('GET cart with a valid existing id returns that cart unchanged', async () =
   assert.equal(data.reset, undefined, 'no reset for a healthy cart');
   assert.equal(data.cart.id, created.id);
   assert.equal(data.cart.totalQuantity, 2);
+});
+
+test('GET cart via a base64url token returns the existing cart unchanged (no false self-heal)', async () => {
+  const variantId = await firstVariantId();
+  const created = await shopify.cartCreate({ lines: [{ merchandiseId: variantId, quantity: 3 }] });
+  const { status, data } = await callToken({ id: created.id });
+  assert.equal(status, 200);
+  assert.equal(data.reset, undefined, 'a healthy cart carried as a token is not discarded');
+  assert.equal(data.cart.id, created.id, 'the id survives the token round-trip intact');
+  assert.equal(data.cart.totalQuantity, 3);
+});
+
+test('PATCH lines via a base64url token mutates the real cart (token decodes server-side)', async () => {
+  const variantId = await firstVariantId();
+  const created = await shopify.cartCreate({ lines: [{ merchandiseId: variantId, quantity: 1 }] });
+  const lineId = created.lines[0].id;
+  const { status, data } = await callToken({ method: 'PATCH', id: created.id, body: { lines: [{ id: lineId, quantity: 5 }] } });
+  assert.equal(status, 200);
+  assert.equal(data.reset, undefined);
+  assert.equal(data.cart.id, created.id);
+  assert.equal(data.cart.totalQuantity, 5);
+});
+
+test('DELETE lines via a base64url token (with /lines suffix) targets the real cart', async () => {
+  const variantId = await firstVariantId();
+  const created = await shopify.cartCreate({ lines: [{ merchandiseId: variantId, quantity: 2 }] });
+  const lineId = created.lines[0].id;
+  const { status, data } = await callToken({ method: 'DELETE', id: created.id, suffix: 'lines', body: { lineIds: [lineId] } });
+  assert.equal(status, 200);
+  assert.equal(data.reset, undefined);
+  assert.equal(data.cart.id, created.id);
+  assert.equal(data.cart.lines.length, 0);
 });
 
 test('POST add to a stale cart id self-heals: a fresh cart is created with the line', async () => {
