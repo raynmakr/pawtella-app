@@ -17,6 +17,10 @@ export function resolveStock(product: Pick<Product, "availableForSale" | "tags" 
   if (product.pawPointsPack) return { state: "in_stock", label: "Digital · instant delivery" };
   const s = stock?.state ?? "unknown";
   if (s === "in_stock") return { state: s, label: "In stock · pickup today", qty: stock?.qty };
+  if (s === "low") {
+    const qty = stock?.qty ?? null;
+    return { state: s, label: qty ? `Only ${qty} left · pickup today` : "Low stock · pickup today", qty };
+  }
   if (s === "special_order") {
     const lead = stock?.leadDays ?? 7;
     return { state: s, label: `Ships in ${lead} days`, leadDays: lead };
@@ -25,6 +29,7 @@ export function resolveStock(product: Pick<Product, "availableForSale" | "tags" 
   // unknown → Storefront availability
   const qty = product.variants.reduce((sum, v) => sum + (v.quantityAvailable ?? 0), 0);
   if (product.tags.includes("special-order") && qty <= 0 && product.availableForSale) return { state: "special_order", label: "Ships in 7 days", leadDays: 7 };
+  if (product.availableForSale && qty > 0 && qty <= 3) return { state: "low", label: `Only ${qty} left · pickup today`, qty };
   if (product.availableForSale) return { state: "in_stock", label: "In stock · pickup today", qty };
   return { state: "sold_out", label: "Sold out" };
 }
@@ -35,7 +40,9 @@ export function StockBadge({ stock, className, size = "sm" }: { stock: ResolvedS
       ? "bg-muted text-muted-foreground"
       : stock.state === "special_order"
         ? "bg-accent text-points-foreground dark:text-points"
-        : "bg-teal-soft text-secondary";
+        : stock.state === "low"
+          ? "bg-accent text-points-foreground dark:text-points"
+          : "bg-teal-soft text-secondary";
   const Icon = stock.state === "sold_out" ? XCircleIcon : stock.state === "special_order" ? ClockIcon : CheckCircle2Icon;
   return (
     <span

@@ -84,3 +84,23 @@ DATABASE_URL='<production-neon-connection-string>' DATABASE_SSL=true \
 ```
 
 It prints a JSON diff of `points_earned` / `points_redeemed` / `pack_points_granted` and whether this was the first application. `shop_orders.effects_applied_at` is stamped on first success and gates the non-idempotent effects (packs, depot reservation) from running twice.
+
+### Backfilling depot stock from Shopify (source of truth)
+
+Stock state (`in stock` / `low` / `sold out` / `special order`) and order reservations read the `inventory_items` mirror. **Shopify is the source of truth for depot quantities.** If that mirror is empty or missing SKUs (e.g. products were created directly in Shopify and Franpos never imported them), the shop shows `stock.state: "unknown"` and `reserveForOrder` logs `reserved: 0`. Backfill the mirror from Shopify's own storefront availability:
+
+```bash
+# Run locally against production (serverless has no shell). Needs SHOPIFY_STORE_DOMAIN +
+# SHOPIFY_STOREFRONT_TOKEN so it reads the real catalog (otherwise it syncs the mock catalog).
+DATABASE_URL='<production-neon-connection-string>' DATABASE_SSL=true \
+  SHOPIFY_STORE_DOMAIN='<your-store>.myshopify.com' SHOPIFY_STOREFRONT_TOKEN='<storefront-token>' \
+  node scripts/sync-shopify-inventory.mjs
+```
+
+Or hit the admin endpoint (same `INVENTORY_IMPORT_SECRET` as the CSV import), which runs in the deployed environment and already has the Shopify env vars:
+
+```bash
+curl -X POST https://<app>/api/inventory/sync-shopify -H "X-Import-Secret: $INVENTORY_IMPORT_SECRET"
+```
+
+Both page the whole Shopify catalog and upsert each SKU'd variant: `qty_on_hand` ← Shopify `quantityAvailable` at the depot, linking the Shopify product/variant/handle so stock state resolves and reservations decrement correctly. It is **idempotent** and preserves outstanding `qty_reserved_online`; digital Paw Point packs (`PP-*`) are skipped. Thereafter the `inventory_levels/update` webhook keeps `shopify_available` fresh in real time; re-run the backfill (or schedule it) whenever the catalog changes in bulk.

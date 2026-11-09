@@ -167,9 +167,11 @@ will replace it. Never overwrite a file owned by someone else.
 - `recomputeTiers() → count`, `matureEarnings() → count`
 
 ### lib/inventory/sync.js (Backend G)
-- `runSync({ source? }) → summary`
-- `reserveForOrder(order, tx)` (increments qty_reserved_online by SKU)
-- `getStockState(handle) → { state: 'in_stock'|'special_order'|'sold_out'|'unknown', qty, leadDays? }`
+- **Shopify is the source of truth for depot stock.** `syncFromShopify({ shopify? }) → summary` backfills/refreshes the `inventory_items` mirror from the Shopify catalog (`qty_on_hand` ← storefront `quantityAvailable`, links product/variant/handle; packs skipped). Run via `node scripts/sync-shopify-inventory.mjs` or `POST /api/inventory/sync-shopify` (`X-Import-Secret`).
+- `runSync({ source? }) → summary` (Franpos → mirror → push to Shopify)
+- `reserveForOrder(order, tx)` (increments qty_reserved_online by SKU; needs a mirror row — backfill from Shopify first)
+- `getStockState(handle, product?) → { state: 'in_stock'|'low'|'special_order'|'sold_out'|'unknown', qty, leadDays? }` — prefers the live Shopify `product` (source of truth) when given; else the mirror.
+- `stockStateFromShopify(product, { policy?, leadDays?, sku? }) → stockState` — pure; derives state from storefront `availableForSale` + `variants[].quantityAvailable` (`low` at ≤ `LOW_STOCK_THRESHOLD`).
 
 ### lib/notifications.js and lib/email.js (Backend E)
 - `notify({ userId, journey, channel, dedupeKey, title, body, payload? }) → { created: boolean }` (inserts queued; ignores duplicate dedupeKey)

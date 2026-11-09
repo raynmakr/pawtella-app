@@ -13,7 +13,7 @@ export interface ProductVariant {
   quantityAvailable?: number | null;
 }
 
-export type StockStateName = "in_stock" | "special_order" | "sold_out" | "unknown";
+export type StockStateName = "in_stock" | "low" | "special_order" | "sold_out" | "unknown";
 
 /** lib/inventory/sync.js getStockState */
 export interface StockState {

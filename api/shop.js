@@ -66,9 +66,9 @@ async function reviewsSummary(handle) {
   return { avg: Math.round((row?.avg || 0) * 10) / 10, count: row?.count || 0 };
 }
 
-async function stockState(handle) {
+async function stockState(handle, product = null) {
   try {
-    return (await getStockState(handle)) || { state: 'unknown' };
+    return (await getStockState(handle, product)) || { state: 'unknown' };
   } catch (err) {
     console.warn('[shop] stock lookup failed', { handle, error: err?.message });
   }
@@ -144,7 +144,7 @@ async function get(req) {
     const handle = decodeURIComponent(second);
     const product = await shopify.getProduct(handle);
     if (!product) throw notFound('Product not found');
-    const [stock, reviews] = await Promise.all([stockState(handle), reviewsSummary(handle)]);
+    const [stock, reviews] = await Promise.all([stockState(handle, product), reviewsSummary(handle)]);
     return { product: { ...product, stock, reviews } };
   }
   if (head === 'cart' && seg.length >= 2) {

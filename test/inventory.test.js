@@ -11,8 +11,9 @@ import { getSource } from '../lib/inventory/source.js';
 import { mockItems } from '../lib/inventory/mock.js';
 import { createRecordingShopify } from '../lib/inventory/shopify-fallback.js';
 import {
-  importItems, pushToShopify, runSync, getStockState, reserveForOrder, releaseReservation,
-  applyShopifyInventoryLevel, setSourcing, listSourcingQueue, discoveredSince, outOfStockSince, getStatus,
+  importItems, pushToShopify, runSync, getStockState, stockStateFromShopify, syncFromShopify,
+  reserveForOrder, releaseReservation, applyShopifyInventoryLevel, setSourcing, listSourcingQueue,
+  discoveredSince, outOfStockSince, getStatus,
 } from '../lib/inventory/sync.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -196,7 +197,7 @@ test('pushToShopify creates products once, sets sellable quantity and applies po
   shopify.calls.length = 0;
   const pushed = await pushToShopify({ onlyChanged: true, shopify });
   assert.equal(pushed.failed, 0);
-  assert.equal(shopify.calls.filter((c) => c.fn === 'createProduct').length, 0, 'no duplicate products');
+  assert.equal(shopify.calls.filter((c) => c.fn === 'createProduct' && skus.includes(c.args.sku)).length, 0, 'no duplicate products');
 
   const p2 = await one('SELECT * FROM inventory_items WHERE sku = $1', [sku('P2')]);
   const p3 = await one('SELECT * FROM inventory_items WHERE sku = $1', [sku('P3')]);
@@ -303,6 +304,85 @@ test('sourcing queue, digest helpers and status', async () => {
   assert.ok(status.counts.items >= 2);
   assert.ok(status.lastImport);
   assert.ok(Array.isArray(status.syncErrors));
+});
+
+// ---------------------------------------------------------------------------------------------
+// Shopify as the source of truth: stock state from the live product + backfill
+// ---------------------------------------------------------------------------------------------
+
+test('stockStateFromShopify derives in_stock / low / sold_out / special_order from Shopify data', () => {
+  assert.equal(stockStateFromShopify({ availableForSale: true, variants: [{ quantityAvailable: 12 }] }).state, 'in_stock');
+  assert.equal(stockStateFromShopify({ availableForSale: true, variants: [{ quantityAvailable: 2 }] }).state, 'low');
+  const lowOne = stockStateFromShopify({ availableForSale: true, variants: [{ quantityAvailable: 1 }] });
+  assert.equal(lowOne.state, 'low');
+  assert.equal(lowOne.qty, 1);
+  assert.equal(stockStateFromShopify({ availableForSale: false, variants: [{ quantityAvailable: 0 }] }).state, 'sold_out');
+  // tracked, none left, but Shopify still sells it (special order / backorder) → special_order
+  const sp = stockStateFromShopify({ availableForSale: true, variants: [{ quantityAvailable: 0 }] }, { policy: 'special_order', leadDays: 9 });
+  assert.equal(sp.state, 'special_order');
+  assert.equal(sp.leadDays, 9);
+  // Shopify not tracking units → lean on availableForSale
+  assert.equal(stockStateFromShopify({ availableForSale: true, variants: [{ quantityAvailable: null }] }).state, 'in_stock');
+  assert.equal(stockStateFromShopify({ availableForSale: false, variants: [{ quantityAvailable: null }] }).state, 'sold_out');
+});
+
+test('getStockState prefers the live Shopify product over the (missing) DB mirror', async () => {
+  // Reproduce the prod bug: no inventory_items row → DB path returns unknown; the Shopify product is authoritative.
+  assert.equal((await getStockState(`ghost-${RUN}`)).state, 'unknown');
+  const product = { availableForSale: true, variants: [{ quantityAvailable: 7 }] };
+  const live = await getStockState(`ghost-${RUN}`, product);
+  assert.equal(live.state, 'in_stock');
+  assert.equal(live.qty, 7);
+});
+
+test('syncFromShopify backfills inventory_items so stock state and reservations work', async () => {
+  const skuA = sku('SHOPSYNC-A');
+  const skuB = sku('SHOPSYNC-B');
+  madeSkus.add(skuA);
+  madeSkus.add(skuB);
+  const fake = {
+    isMock: true,
+    async getProducts({ cursor } = {}) {
+      if (cursor) return { products: [], nextCursor: null };
+      return {
+        nextCursor: null,
+        products: [
+          { id: 'gid://shopify/Product/sa', handle: `shopsync-a-${RUN}`, title: 'Sync A', priceCents: 1500, availableForSale: true, variants: [{ id: 'v-a', sku: skuA, priceCents: 1500, availableForSale: true, quantityAvailable: 4 }] },
+          { id: 'gid://shopify/Product/sb', handle: `shopsync-b-${RUN}`, title: 'Sync B', priceCents: 900, availableForSale: false, variants: [{ id: 'v-b', sku: skuB, priceCents: 900, availableForSale: false, quantityAvailable: 0 }] },
+          { id: 'gid://shopify/Product/pack', handle: `pack-${RUN}`, title: 'Pack', pawPointsPack: 100, availableForSale: true, variants: [{ id: 'v-pp', sku: `PP-${RUN}`, quantityAvailable: null, availableForSale: true }] },
+        ],
+      };
+    },
+  };
+  const res = await syncFromShopify({ shopify: fake });
+  assert.equal(res.products, 3);
+  assert.equal(res.upserted, 2);
+  assert.equal(res.skippedPack, 1);
+
+  const a = await one('SELECT qty_on_hand, source, shopify_product_id, shopify_handle, shopify_available FROM inventory_items WHERE sku = $1', [skuA]);
+  assert.equal(a.qty_on_hand, 4);
+  assert.equal(a.source, 'shopify');
+  assert.equal(a.shopify_product_id, 'gid://shopify/Product/sa');
+  assert.equal(a.shopify_handle, `shopsync-a-${RUN}`);
+  assert.equal(a.shopify_available, 4);
+  const b = await one('SELECT qty_on_hand, went_out_of_stock_at FROM inventory_items WHERE sku = $1', [skuB]);
+  assert.equal(b.qty_on_hand, 0);
+  assert.ok(b.went_out_of_stock_at, 'out-of-stock item is flagged');
+
+  // getStockState now resolves via the mirror (low: 4 is above threshold → in_stock)
+  assert.equal((await getStockState(`shopsync-a-${RUN}`)).state, 'in_stock');
+
+  // reservation now finds the row — the production "reserved: 0" bug is gone
+  const r = await reserveForOrder({ id: 99, line_items: [{ sku: skuA, quantity: 2 }] });
+  assert.equal(r.reserved, 2);
+  assert.equal((await one('SELECT qty_reserved_online FROM inventory_items WHERE sku = $1', [skuA])).qty_reserved_online, 2);
+
+  // re-sync refreshes qty from Shopify and is idempotent for identity; reservation is preserved
+  const again = await syncFromShopify({ shopify: fake });
+  assert.equal(again.upserted, 2);
+  const a2 = await one('SELECT qty_on_hand, qty_reserved_online FROM inventory_items WHERE sku = $1', [skuA]);
+  assert.equal(a2.qty_on_hand, 4);
+  assert.equal(a2.qty_reserved_online, 2, 'reservations survive a re-sync');
 });
 
 test('runSync with an injected source imports and pushes', async () => {

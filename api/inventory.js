@@ -1,10 +1,11 @@
 // Inventory import + status.  /api/inventory/:path* → this file (vercel.json).
-//   POST /api/inventory/import   CSV body (text/csv) or JSON { rows: Item[] }; header X-Import-Secret
-//   GET  /api/inventory/status   last import, counts, Shopify sync errors
+//   POST /api/inventory/import       CSV body (text/csv) or JSON { rows: Item[] }; header X-Import-Secret
+//   POST /api/inventory/sync-shopify backfill inventory_items from Shopify (depot stock source of truth)
+//   GET  /api/inventory/status       last import, counts, Shopify sync errors
 import { route, segments, badRequest, unauthorized, notFound, rawBody } from '../lib/http.js';
 import { env } from '../lib/env.js';
 import { parseFranposCsv } from '../lib/inventory/franpos-csv.js';
-import { importItems, pushToShopify, getStatus } from '../lib/inventory/sync.js';
+import { importItems, pushToShopify, getStatus, syncFromShopify } from '../lib/inventory/sync.js';
 
 const BASE = '/api/inventory';
 
@@ -78,6 +79,11 @@ export default route({
   POST: async (req) => {
     const [first] = segments(req, BASE);
     if (first === 'import') return handleImport(req);
+    if (first === 'sync-shopify') {
+      checkSecret(req);
+      const summary = await syncFromShopify();
+      return { ok: true, synced: summary };
+    }
     throw notFound();
   },
   GET: async (req) => {
