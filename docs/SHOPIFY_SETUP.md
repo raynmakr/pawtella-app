@@ -52,15 +52,36 @@ API credentials → **Install app**. Then set in Vercel (Project → Settings �
 and locally in `.env`:
 
 ```
-SHOPIFY_STORE_DOMAIN=pawtella.myshopify.com
-SHOPIFY_STOREFRONT_TOKEN=<Storefront API access token (public)>
-SHOPIFY_ADMIN_TOKEN=<Admin API access token, shpat_…  (shown ONCE)>
+SHOPIFY_STORE_DOMAIN=pawtella-app.myshopify.com
 SHOPIFY_API_VERSION=2026-10
-SHOPIFY_WEBHOOK_SECRET=<see step 7>
 SHOPIFY_DEPOT_LOCATION_ID=gid://shopify/Location/<id>   (step 3)
+
+# Admin API — Dev Dashboard app (current Shopify; legacy shpat_ tokens are no longer issued):
+SHOPIFY_CLIENT_ID=<Dev Dashboard → app → Settings → Client ID>
+SHOPIFY_CLIENT_SECRET=<Dev Dashboard → app → Settings → Client secret>
+# …or, for an old custom app only: SHOPIFY_ADMIN_TOKEN=shpat_…
+
+# Storefront API — server-side private token (preferred) or public token:
+SHOPIFY_STOREFRONT_PRIVATE_TOKEN=<Headless sales channel → storefront → Private access token>
+# SHOPIFY_STOREFRONT_TOKEN=<public token>   (only if no private token)
+
+# Webhook HMAC secret. Optional: defaults to SHOPIFY_CLIENT_SECRET, which is what Dev Dashboard
+# apps sign webhooks with. Set it only if your webhooks are signed with a different secret.
+# SHOPIFY_WEBHOOK_SECRET=
 ```
 
-The Storefront token alone switches the catalog/cart to the real store; the Admin token switches
+**Admin token exchange.** With `SHOPIFY_CLIENT_ID` + `SHOPIFY_CLIENT_SECRET`, `lib/shopify-client.js`
+uses Shopify's client credentials grant (`POST https://<shop>/admin/oauth/access_token`,
+`grant_type=client_credentials`) to get an Admin token valid 24 hours, caches it per function
+instance, renews it 5 minutes before expiry and retries once on a 401. This only works when the app
+and the store are in the **same Shopify organization** and the app is installed on the store;
+otherwise Shopify answers `shop_not_permitted`.
+
+**Storefront private token.** Install the **Headless** sales channel in the Shopify admin, create a
+storefront, and copy its *private* access token. It is sent as `Shopify-Storefront-Private-Token`
+and must stay server-side (it never reaches the browser here — the web app talks to our API).
+
+The Storefront token alone switches the catalog/cart to the real store; the Admin credentials switch
 discounts, gift cards, products and inventory. Missing pieces fall back to the mock (`isMock`,
 `isAdminMock` in `lib/shopify.js`).
 
@@ -153,9 +174,11 @@ handler releases the idempotency claim so Shopify's retry re-runs it).
 app's `shopify.app.toml`): `customers/data_request`, `customers/redact`, `shop/redact` → same URL.
 `customers/redact` anonymizes the matching Pawtella user exactly like `DELETE /api/auth/account`.
 
-> Webhooks created in the admin UI use the store's single signing secret. If you later create
-> subscriptions via the Admin API (`webhookSubscriptionCreate`), they are signed with the **app's
-> client secret** instead; put that in `SHOPIFY_WEBHOOK_SECRET` in that case.
+> **Which secret signs?** Subscriptions owned by the Dev Dashboard app (created via the app's
+> `shopify.app.toml` or the Admin API `webhookSubscriptionCreate`) are signed with the **app's client
+> secret** — the default here, so nothing extra to set. Webhooks created by hand in the admin UI
+> (Settings → Notifications → Webhooks) use the store's own signing secret shown on that page; if you
+> go that route, set that value as `SHOPIFY_WEBHOOK_SECRET`. Don't mix the two.
 
 Test locally: `PORT=3003 npm run dev`, then either complete a cart on `/mock-checkout/<cartId>`
 (mock mode) or forward a real dev-store webhook with `shopify app webhook trigger --topic orders/paid

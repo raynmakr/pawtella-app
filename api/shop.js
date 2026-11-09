@@ -12,36 +12,36 @@ const BASE = '/api/shop';
 export const DEFAULT_FULFILLMENT = {
   depot: {
     name: 'Pawtella Toronto Depot',
-    street1: '123 Placeholder Ave, Unit 4',
+    street1: '891 College St',
     city: 'Toronto',
     province: 'ON',
-    postalCode: 'M5V 0A0',
+    postalCode: 'M6H 1A1',
     country: 'CA',
-    phone: '+1 (416) 555-0100',
-    lat: 43.6426,
-    lng: -79.3871,
-    mapsUrl: 'https://maps.google.com/?q=123+Placeholder+Ave+Toronto+ON',
+    phone: '+1 (647) 438-8323',
+    // Approximate (College St at Ossington). Confirm and override via app_settings 'fulfillment'.
+    lat: 43.6545,
+    lng: -79.4228,
+    shopifyLocationId: 'gid://shopify/Location/115648397619',
+    mapsUrl: 'https://maps.google.com/?q=891+College+St,+Toronto,+ON+M6H+1A1',
   },
-  hours: [
-    { days: 'Mon–Fri', open: '10:00', close: '19:00' },
-    { days: 'Sat', open: '10:00', close: '17:00' },
-    { days: 'Sun', open: 'Closed', close: '' },
-  ],
+  // Opening hours, fees and delivery windows are set in Shopify and not yet confirmed here.
+  // Admins override this whole object with PATCH /api/admin/settings { key: 'fulfillment', value }.
+  hours: [],
   pickup: {
-    title: 'Free pickup at the Toronto depot',
-    instructions: 'Choose "Pickup" at checkout. We text you when your order is ready (usually within 2 hours during opening hours). Bring your order number; park in the loading zone out front.',
-    readyWithinText: 'Ready in ~2 hours',
+    title: 'Free pickup at our Toronto depot',
+    instructions: 'Choose "Pickup" at checkout. We let you know when your order is ready. Bring your order number.',
+    readyWithinText: 'We notify you when it is ready',
   },
   localDelivery: {
-    title: 'Local delivery across Toronto',
-    radiusText: 'Within 15 km of the depot (most of Toronto, East York, Etobicoke south of the 401 and Scarborough west of Markham Rd).',
-    feeText: 'Free over $49, otherwise $7.99',
-    windowText: 'Same day if ordered before 2 pm, otherwise next day. Delivered between 4 pm and 9 pm.',
+    title: 'Local delivery in Toronto',
+    radiusText: 'Within 15 km of our College St depot.',
+    feeText: 'Delivery fee shown at checkout',
+    windowText: 'Delivery timing shown at checkout',
     minOrderCents: 0,
   },
   shipping: {
     title: 'Shipping across Canada and the US',
-    text: 'Canada Post and UPS. Free shipping in Canada over $79; US rates and duties are shown at checkout.',
+    text: 'Rates, and duties for US orders, are shown at checkout.',
   },
   notes: 'Paw Point packs are digital and do not need a fulfillment method.',
 };
