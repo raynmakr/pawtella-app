@@ -5,6 +5,7 @@ import { optionalAuth, requireAuth } from '../lib/auth.js';
 import { one, many } from '../lib/db.js';
 import * as shopify from '../lib/shopify.js';
 import { listOrdersForUser, getOrderForUser, toApiOrder } from '../lib/orders.js';
+import { getStockState } from '../lib/inventory/sync.js';
 import { track, EVENT } from '../lib/events.js';
 import { env } from '../lib/env.js';
 import { gid } from '../lib/shopify-client.js';
@@ -67,8 +68,7 @@ async function reviewsSummary(handle) {
 
 async function stockState(handle) {
   try {
-    const inv = await import('../lib/inventory/sync.js');
-    if (typeof inv.getStockState === 'function') return (await inv.getStockState(handle)) || { state: 'unknown' };
+    return (await getStockState(handle)) || { state: 'unknown' };
   } catch (err) {
     console.warn('[shop] stock lookup failed', { handle, error: err?.message });
   }

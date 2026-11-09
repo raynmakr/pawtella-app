@@ -154,7 +154,8 @@ will replace it. Never overwrite a file owned by someone else.
 - `verifyWebhookHmac(rawBodyBuffer, hmacHeader) → boolean`
 
 ### lib/orders.js (Backend C)
-- `upsertOrderFromWebhook(payload, { topic }) → { order, isNew }` — runs in one transaction and, when `isNew && financial_status === 'paid'`: `captureHold` for matched discount codes, `awardOrderPoints`, `grantPackPoints` (line items whose product tags include `paw-points:<n>`), `accrueCommission` (lib/partners.js), `reserveForOrder` (lib/inventory/sync.js), `track(order_paid)`.
+- `upsertOrderFromWebhook(payload, { topic }) → { order, isNew }` — runs in one transaction and, when `isNew && financial_status === 'paid'`: `captureHold` for matched discount codes, `awardOrderPoints`, `grantPackPoints` (line items whose product tags include `paw-points:<n>`), `accrueCommission` (lib/partners.js), `reserveForOrder` (lib/inventory/sync.js), `track(order_paid)`. The side-effect modules are **statically imported** (not `import()`d) so Vercel's file tracer always bundles them; a missing module is a hard error, never a silent skip.
+- `reapplyPaidEffects(idOrShopifyId) → { orderId, firstApplication, before, after }` — idempotent maintenance re-run of the paid-order effects for one order (matched by `shop_orders.id` or `shopify_order_id`). Hold capture, order points and commission are self-idempotent; packs and the depot reservation run only while `shop_orders.effects_applied_at IS NULL`. Throws if the order is missing or not paid. Invoked by `scripts/reapply-order-effects.js`.
 - `toApiOrder(row)`
 
 ### lib/partners.js (Backend F)

@@ -7,18 +7,12 @@ import { env } from '../../lib/env.js';
 import { query, withTransaction } from '../../lib/db.js';
 import { verifyWebhookHmac } from '../../lib/shopify.js';
 import { upsertOrderFromWebhook } from '../../lib/orders.js';
+import { applyShopifyInventoryLevel } from '../../lib/inventory/sync.js';
+import { enqueueAdmin } from '../../lib/notifications.js';
 
 export const config = { api: { bodyParser: false } };
 
 const ORDER_TOPICS = new Set(['orders/paid', 'orders/create', 'orders/updated', 'orders/fulfilled', 'orders/cancelled', 'orders/partially_fulfilled']);
-
-async function optional(path) {
-  try {
-    return await import(path);
-  } catch {
-    return {};
-  }
-}
 
 const header = (req, name) => {
   const v = req.headers[name.toLowerCase()];
@@ -91,25 +85,17 @@ export async function dispatch(topic, payload, meta = {}) {
       return { orderId: order.id, status: order.status };
     }
     case 'inventory_levels/update': {
-      const inv = await optional('../../lib/inventory/sync.js');
-      if (typeof inv.applyShopifyInventoryLevel === 'function') {
-        const r = await inv.applyShopifyInventoryLevel(payload);
-        return { inventory: r ?? true };
-      }
-      console.log('[webhooks/shopify] inventory_levels/update (no handler)', { inventoryItemId: payload.inventory_item_id, available: payload.available });
-      return { inventory: 'logged' };
+      const r = await applyShopifyInventoryLevel(payload);
+      return { inventory: r ?? true };
     }
     case 'customers/data_request': {
       console.log('[webhooks/shopify] GDPR data_request', { customerId: payload.customer?.id, ordersRequested: payload.orders_requested?.length });
-      const n = await optional('../../lib/notifications.js');
-      if (typeof n.enqueueAdmin === 'function') {
-        await n.enqueueAdmin({
-          journey: 'gdpr_data_request',
-          title: 'Shopify customer data request',
-          body: `Customer ${payload.customer?.email || payload.customer?.id} requested their data. Orders: ${(payload.orders_requested || []).join(', ') || 'none'}. Export within 30 days.`,
-          payload: { customerId: payload.customer?.id, email: payload.customer?.email, orders: payload.orders_requested || [], shop: meta.shopDomain },
-        });
-      }
+      await enqueueAdmin({
+        journey: 'gdpr_data_request',
+        title: 'Shopify customer data request',
+        body: `Customer ${payload.customer?.email || payload.customer?.id} requested their data. Orders: ${(payload.orders_requested || []).join(', ') || 'none'}. Export within 30 days.`,
+        payload: { customerId: payload.customer?.id, email: payload.customer?.email, orders: payload.orders_requested || [], shop: meta.shopDomain },
+      });
       return { gdpr: 'queued' };
     }
     case 'customers/redact': {

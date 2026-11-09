@@ -71,3 +71,16 @@ Mock mode gives a seeded catalog, fake AI replies, placeholder generations and a
 - **Daily digest** email (`/api/cron/admin-digest`) is the operator's inbox: new partner applications, payout requests, sourcing decisions, reports, top shareable posts.
 - **Points liability** = `SUM(users.paw_points) × $0.05`; shown in the digest and `GET /api/admin/metrics`.
 - **Backups:** Neon keeps point-in-time restore; export monthly with `pg_dump` for cold storage.
+
+### Re-applying paid-order side effects
+
+If a paid order's side effects were skipped (points not earned, commission/inventory missed), repair it with `scripts/reapply-order-effects.js`. It is **idempotent** — safe to run more than once; already-applied effects are no-ops. It accepts a `shop_orders.id` or the Shopify order id. Point the script at the target database via `DATABASE_URL` (serverless has no shell, so run it locally against the production DB):
+
+```bash
+# Repair Shopify order #1001 (Shopify order id 19000857723187) in production.
+# Use the production DATABASE_URL (Neon) — do NOT change any Vercel env var to do this.
+DATABASE_URL='<production-neon-connection-string>' DATABASE_SSL=true \
+  node scripts/reapply-order-effects.js 19000857723187
+```
+
+It prints a JSON diff of `points_earned` / `points_redeemed` / `pack_points_granted` and whether this was the first application. `shop_orders.effects_applied_at` is stamped on first success and gates the non-idempotent effects (packs, depot reservation) from running twice.

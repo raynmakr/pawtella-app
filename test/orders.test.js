@@ -3,7 +3,7 @@ import '../scripts/load-env.js';
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { query, one, closePool } from '../lib/db.js';
-import { detectFulfillmentType, packPointsForLine, noteAttribute, money, mapOrder, toApiOrder, upsertOrderFromWebhook, listOrdersForUser, getOrderForUser } from '../lib/orders.js';
+import { detectFulfillmentType, packPointsForLine, noteAttribute, money, mapOrder, toApiOrder, upsertOrderFromWebhook, listOrdersForUser, getOrderForUser, reapplyPaidEffects } from '../lib/orders.js';
 import * as mock from '../lib/shopify-mock.js';
 import { buildOrderPayload } from '../api/mock-checkout/[cartId].js';
 
@@ -161,4 +161,63 @@ test('paid order reserves depot stock; fulfilled/cancelled releases it exactly o
     await query('DELETE FROM shop_orders WHERE shopify_order_id = ANY($1)', [[String(base.id), String(base.id + 1)]]);
     await query('DELETE FROM inventory_items WHERE sku = $1', [sku]);
   }
+});
+
+test('reapplyPaidEffects fills skipped effects once and is idempotent', async () => {
+  // Reproduce the production bug: a paid order whose side effects never ran (modules were dropped
+  // from the serverless bundle) — no points, nothing reserved, effects_applied_at NULL — then repair.
+  const s = suffix();
+  const user = await one(`INSERT INTO users (email, handle, display_name) VALUES ($1, $2, 'Reapply Test') RETURNING *`, [`re-${s}@example.com`, `re_${s}`]);
+  users.push(user.id);
+  const sku = `TREAP-${s.toUpperCase()}`;
+  await query(`INSERT INTO inventory_items (sku, name, qty_on_hand) VALUES ($1, 'Reapply item', 10)`, [sku]);
+  const shopifyId = `reap-${s}`;
+  orders.push(shopifyId);
+  const lineItems = [{ sku, title: 'Reapply item', quantity: 2, priceCents: 1000 }];
+  const order = await one(
+    `INSERT INTO shop_orders (user_id, shopify_order_id, order_number, email, currency, subtotal_cents, discount_cents,
+       shipping_cents, tax_cents, total_cents, discount_codes, fulfillment_type, financial_status, fulfillment_status,
+       status, line_items, raw, placed_at)
+     VALUES ($1,$2,'#9001',$3,'CAD',2000,0,0,0,2000,'{}','pickup','paid','unfulfilled','paid',$4::jsonb,'{}'::jsonb, now())
+     RETURNING *`,
+    [user.id, shopifyId, user.email, JSON.stringify(lineItems)],
+  );
+  const reserved = async () => (await one('SELECT qty_reserved_online FROM inventory_items WHERE sku = $1', [sku])).qty_reserved_online;
+  try {
+    assert.equal(order.effects_applied_at, null, 'starts unapplied');
+
+    const first = await reapplyPaidEffects(shopifyId);
+    assert.equal(first.firstApplication, true);
+    assert.equal(first.after.pointsEarned, 20, 'floor(2000/100) = 20 earned');
+    assert.ok(first.after.effectsAppliedAt, 'marker set');
+    assert.equal(await reserved(), 2, 'depot reserved');
+    const bal1 = (await one('SELECT paw_points FROM users WHERE id = $1', [user.id])).paw_points;
+    assert.equal(bal1, 20 + 10, '20 earned + 10 first-order bonus');
+
+    // Re-run (by numeric id this time): every effect is now a no-op.
+    const second = await reapplyPaidEffects(order.id);
+    assert.equal(second.firstApplication, false);
+    assert.equal(second.after.pointsEarned, 20);
+    assert.equal(await reserved(), 2, 'not reserved twice');
+    const bal2 = (await one('SELECT paw_points FROM users WHERE id = $1', [user.id])).paw_points;
+    assert.equal(bal1, bal2, 'balance unchanged on second reapply');
+  } finally {
+    await query('DELETE FROM shop_orders WHERE shopify_order_id = $1', [shopifyId]);
+    await query('DELETE FROM inventory_items WHERE sku = $1', [sku]);
+  }
+});
+
+test('reapplyPaidEffects refuses an unpaid order and an unknown order', async () => {
+  const s = suffix();
+  const shopifyId = `unpaid-${s}`;
+  orders.push(shopifyId);
+  await one(
+    `INSERT INTO shop_orders (shopify_order_id, order_number, currency, subtotal_cents, total_cents, discount_codes,
+       fulfillment_type, financial_status, fulfillment_status, status, line_items, raw, placed_at)
+     VALUES ($1,'#9002','CAD',1000,1000,'{}','pickup','pending','unfulfilled','processing','[]'::jsonb,'{}'::jsonb, now())`,
+    [shopifyId],
+  );
+  await assert.rejects(() => reapplyPaidEffects(shopifyId), /not paid/);
+  await assert.rejects(() => reapplyPaidEffects('definitely-not-an-order'), /not found/);
+  await query('DELETE FROM shop_orders WHERE shopify_order_id = $1', [shopifyId]);
 });

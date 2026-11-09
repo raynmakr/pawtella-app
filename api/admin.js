@@ -23,7 +23,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { route, segments as pathSegments, body, pagination, badRequest, notFound, requireFields, html } from '../lib/http.js';
 import { requireAdmin } from '../lib/auth.js';
-import { query, one, many } from '../lib/db.js';
+import { query, one, many, withTransaction } from '../lib/db.js';
 import { camelize } from '../lib/serialize.js';
 import { awardPoints } from '../lib/points.js';
 import { getMetrics } from '../lib/metrics.js';
@@ -117,7 +117,6 @@ export const subroutes = {
     if (amount > 0) result = await awardPoints(userId, amount, opts);
     else {
       // Negative adjustment: direct ledger write so the admin type is preserved (spendPoints forces type 'spend').
-      const { withTransaction } = await import('../lib/db.js');
       result = await withTransaction(async (tx) => {
         const u = await tx.one('SELECT paw_points FROM users WHERE id = $1 FOR UPDATE', [userId]);
         const balanceAfter = u.paw_points + amount;
