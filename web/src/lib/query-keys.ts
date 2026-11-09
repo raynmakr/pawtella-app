@@ -52,4 +52,7 @@ export const queryKeys = {
     detail: (id: string | number) => ["partners", String(id)] as const,
     me: ["partners", "me"] as const,
   },
+  subscriptions: {
+    all: ["subscriptions"] as const,
+  },
 };

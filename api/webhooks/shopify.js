@@ -9,6 +9,8 @@ import { verifyWebhookHmac } from '../../lib/shopify.js';
 import { upsertOrderFromWebhook } from '../../lib/orders.js';
 import { applyShopifyInventoryLevel } from '../../lib/inventory/sync.js';
 import { enqueueAdmin } from '../../lib/notifications.js';
+import { flags } from '../../lib/env.js';
+import { dispatchSubscriptionWebhook, SUBSCRIPTION_TOPICS } from '../../lib/subscriptions/webhook.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -69,6 +71,11 @@ export async function dispatch(topic, payload, meta = {}) {
   if (ORDER_TOPICS.has(topic)) {
     const { order, isNew } = await upsertOrderFromWebhook(payload, { topic });
     return { orderId: order.id, isNew, status: order.status };
+  }
+  if (SUBSCRIPTION_TOPICS.has(topic)) {
+    // Inert until the feature is on, even if Shopify is already sending these.
+    if (!flags.subscriptionsEnabled) return { subscriptions: 'disabled' };
+    return dispatchSubscriptionWebhook(topic, payload, meta);
   }
   switch (topic) {
     case 'fulfillments/create':

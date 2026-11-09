@@ -182,6 +182,15 @@ will replace it. Never overwrite a file owned by someone else.
 - `createPost(userId, { petId?, generationId?, challengeId?, caption?, mediaUrl, mediaType, thumbnailUrl?, featureConsent? }, tx?) → post` (awards first-post bonus, tracks, referral conversion)
 - `getPostForLanding(id) → { post, user, pet } | null`
 
+### lib/subscriptions/* (Subscribe & Save) — flag-gated by `flags.subscriptionsEnabled`; see docs/SUBSCRIPTIONS.md
+- `rules.js SUB_RULES` — cadences (2/4/6/8w), 5%/10% tiers, $100 CAD threshold, 4.345 weeks/month.
+- `tiers.js`: `customerMonthlyCents(contracts)`, `tierForMonthlyCents(cents) → 5|10`, `discountedPriceCents(base, pct)` (tier keys off BASE price to avoid oscillation).
+- `cadence.js normalizeCadence`, `eligibility.eligibleCategory({collections,title,tags}) → 'dry'|'wet'|'litter'|null`, `dunning.{isDueForBilling,nextDunningStep}`.
+- `shopify.js` (real/mock facade): `createSellingPlanGroup`, `attachProducts`, `getContract`, `updateLinePrices` (draft flow), `createBillingAttempt`, `pause/activate/cancel/skipNextCycle/setCadence`.
+- `service.js`: `recomputeAndApplyTier({userId,shopifyCustomerId})`, `processDueBilling({asOf})`, `handleBillingResult(...)`, `syncContractFromShopify(gid)`, `tierProgressForUser(userId)`, account actions `{pause,resume,cancel,skipNext,changeCadence}ForUser(contract)`.
+- `store.js`: DB mirror upsert/read for `subscription_contracts/_lines/_billing_attempts`, `selling_plan_groups`.
+- `offer.js subscriptionOfferForProduct(product)` builds the PDP offer (null when off/ineligible).
+
 ## HTTP API surface (Phase 1)
 
 Auth (`api/auth.js`, family `/api/auth/*`, all JSON):

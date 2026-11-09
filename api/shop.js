@@ -9,6 +9,7 @@ import { getStockState } from '../lib/inventory/sync.js';
 import { track, EVENT } from '../lib/events.js';
 import { env } from '../lib/env.js';
 import { gid, isCartId, decodeCartToken } from '../lib/shopify-client.js';
+import { subscriptionOfferForProduct } from '../lib/subscriptions/offer.js';
 
 // Real Toronto depot (891 College St). Prefer the configured location, fall back to the known id.
 const DEPOT_LOCATION_ID = gid('Location', env.shopify.depotLocationId || '115648397619');
@@ -124,7 +125,12 @@ function normalizeLines(lines) {
   return lines.map((l) => {
     const merchandiseId = l?.merchandiseId || l?.variantId;
     if (!merchandiseId) throw badRequest('Each line needs merchandiseId');
-    return { merchandiseId, quantity: Math.max(1, parseInt(l.quantity ?? 1, 10) || 1), attributes: l.attributes };
+    return {
+      merchandiseId,
+      quantity: Math.max(1, parseInt(l.quantity ?? 1, 10) || 1),
+      attributes: l.attributes,
+      ...(l.sellingPlanId ? { sellingPlanId: String(l.sellingPlanId) } : {}),
+    };
   });
 }
 
@@ -145,7 +151,8 @@ async function get(req) {
     const product = await shopify.getProduct(handle);
     if (!product) throw notFound('Product not found');
     const [stock, reviews] = await Promise.all([stockState(handle, product), reviewsSummary(handle)]);
-    return { product: { ...product, stock, reviews } };
+    const subscription = await subscriptionOfferForProduct(product).catch(() => null);
+    return { product: { ...product, stock, reviews, subscription } };
   }
   if (head === 'cart' && seg.length >= 2) {
     const id = cartIdFromUrl(req);

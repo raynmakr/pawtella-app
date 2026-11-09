@@ -41,10 +41,31 @@ export interface Product {
   pawPointsPack?: number;
 }
 
+/** A Subscribe & Save cadence option for a product (lib/subscriptions/offer.js). */
+export interface SubscriptionPlan {
+  sellingPlanId: string;
+  weeks: number;
+  label: string;
+  percent: number;
+  priceCents: number;
+}
+
+/** The Subscribe & Save offer attached to an eligible product detail. Null/absent when ineligible. */
+export interface SubscriptionOffer {
+  eligible: true;
+  category: "dry" | "wet" | "litter";
+  basePercent: number;
+  maxPercent: number;
+  thresholdCents: number;
+  plans: SubscriptionPlan[];
+}
+
 /** GET /api/shop/products/:handle adds stock + reviews summary. */
 export interface ProductDetail extends Product {
   stock: StockState;
   reviews: { avg: number; count: number };
+  /** Present only when SUBSCRIPTIONS_ENABLED and the product is eligible. */
+  subscription?: SubscriptionOffer | null;
 }
 
 export interface ProductsPage {
@@ -75,6 +96,9 @@ export interface CartLine {
   lineTotalCents?: number;
   pawPointsPack?: number;
   productId?: string;
+  /** Set when the line was added on a subscription selling plan. */
+  sellingPlanId?: string | null;
+  sellingPlanName?: string | null;
 }
 
 export interface Cart {

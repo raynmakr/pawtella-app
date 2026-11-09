@@ -23,9 +23,16 @@ const cartPath = (id: string, suffix = "") => `/api/shop/cart/${encodeCartToken(
 export interface CartLineInput {
   variantId: string;
   quantity?: number;
+  /** Subscribe & Save: the chosen cadence's Shopify selling plan id. */
+  sellingPlanId?: string | null;
 }
 
-const toLines = (lines: CartLineInput[]) => lines.map((l) => ({ merchandiseId: l.variantId, quantity: l.quantity ?? 1 }));
+const toLines = (lines: CartLineInput[]) =>
+  lines.map((l) => ({
+    merchandiseId: l.variantId,
+    quantity: l.quantity ?? 1,
+    ...(l.sellingPlanId ? { sellingPlanId: l.sellingPlanId } : {}),
+  }));
 
 export const cartService = {
   get: (id: string) => api<{ cart: Cart }>(cartPath(id)),
@@ -59,21 +66,22 @@ const cartListeners = new Set<(cart: Cart) => void>();
  * Add a variant to the cart (creating one when none exists or the saved one has expired).
  * Plain function so other areas (e.g. the Paw Points page quick-buy) can call it outside React Query.
  */
-export async function addToCart({ variantId, quantity = 1 }: CartLineInput): Promise<Cart> {
+export async function addToCart({ variantId, quantity = 1, sellingPlanId = null }: CartLineInput): Promise<Cart> {
   const store = useCartStore.getState();
   store.hydrate();
   const cartId = useCartStore.getState().cartId;
+  const line = { variantId, quantity, sellingPlanId };
   let cart: Cart;
   if (cartId) {
     try {
-      ({ cart } = await cartService.addLines(cartId, [{ variantId, quantity }]));
+      ({ cart } = await cartService.addLines(cartId, [line]));
     } catch (err) {
       // The mock keeps carts in memory; a restarted API forgets them. Start a fresh cart.
-      if (isApiError(err) && err.status === 404) ({ cart } = await cartService.create([{ variantId, quantity }]));
+      if (isApiError(err) && err.status === 404) ({ cart } = await cartService.create([line]));
       else throw err;
     }
   } else {
-    ({ cart } = await cartService.create([{ variantId, quantity }]));
+    ({ cart } = await cartService.create([line]));
   }
   remember(cart);
   return cart;

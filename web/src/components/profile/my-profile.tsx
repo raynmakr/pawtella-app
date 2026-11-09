@@ -8,6 +8,7 @@ import {
   HandshakeIcon,
   ImagePlusIcon,
   PackageIcon,
+  RefreshCwIcon,
   SettingsIcon,
   StoreIcon,
   TrophyIcon,
@@ -36,6 +37,7 @@ function QuickLinks({ isPartner }: { isPartner: boolean | null }) {
   const links: QuickLink[] = [
     { href: "/points", label: "Paw Points", description: "Balance, history and packs", icon: CoinsIcon, tone: "bg-accent text-points-foreground dark:text-points" },
     { href: "/orders", label: "Orders", description: "Pickup and delivery status", icon: PackageIcon, tone: "bg-teal-soft text-secondary" },
+    { href: "/subscriptions", label: "My subscriptions", description: "Auto-ship, save 5–10%", icon: RefreshCwIcon, tone: "bg-coral-soft text-primary" },
     { href: "/invite", label: "Invite friends", description: "Earn +20 PP per friend", icon: GiftIcon, tone: "bg-coral-soft text-primary" },
     { href: "/challenges", label: "Challenges", description: "Weekly themes and winners", icon: TrophyIcon, tone: "bg-accent text-points-foreground dark:text-points" },
     { href: "/partners", label: "Local partners", description: "Vets, groomers and more", icon: StoreIcon, tone: "bg-teal-soft text-secondary" },

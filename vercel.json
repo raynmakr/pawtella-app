@@ -91,6 +91,10 @@
     {
       "source": "/api/reviews/:path*",
       "destination": "/api/reviews"
+    },
+    {
+      "source": "/api/subscriptions/:path*",
+      "destination": "/api/subscriptions"
     }
   ],
   "crons": [
@@ -125,6 +129,10 @@
     {
       "path": "/api/cron/admin-digest",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/subscriptions-billing",
+      "schedule": "0 10 * * *"
     }
   ]
 }

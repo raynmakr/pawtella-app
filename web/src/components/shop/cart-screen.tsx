@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRightIcon, Loader2Icon, ShoppingBagIcon, Trash2Icon } from "lucide-react";
+import { ArrowRightIcon, Loader2Icon, RefreshCwIcon, ShoppingBagIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -161,6 +161,11 @@ export function CartScreen() {
                           {line.title}
                         </Link>
                         {line.variantTitle && line.variantTitle !== "Default Title" && <p className="text-xs text-muted-foreground">{line.variantTitle}</p>}
+                        {line.sellingPlanId ? (
+                          <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                            <RefreshCwIcon className="size-3" /> {line.sellingPlanName || "Subscribe & save"}
+                          </span>
+                        ) : null}
                         {line.pawPointsPack ? <PawPackBadge points={line.pawPointsPack * line.quantity} className="mt-1" /> : null}
                       </div>
                       <button

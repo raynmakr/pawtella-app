@@ -26,6 +26,7 @@ import { QuantityStepper } from "./quantity-stepper";
 import { ReviewsSection } from "./reviews-section";
 import { Stars } from "./stars";
 import { StockBadge, resolveStock } from "./stock-badge";
+import { SubscribeOption } from "./subscribe-option";
 
 export function ProductScreen({ handle }: { handle: string }) {
   const router = useRouter();
@@ -34,6 +35,8 @@ export function ProductScreen({ handle }: { handle: string }) {
   const [variantId, setVariantId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [imageIndex, setImageIndex] = useState(0);
+  // null = one-time purchase; otherwise the chosen Subscribe & Save selling plan id.
+  const [sellingPlanId, setSellingPlanId] = useState<string | null>(null);
 
   const variant = useMemo(() => {
     if (!product) return null;
@@ -41,9 +44,10 @@ export function ProductScreen({ handle }: { handle: string }) {
   }, [product, variantId]);
 
   const add = useMutation({
-    mutationFn: () => addToCart({ variantId: variant!.id, quantity }),
+    mutationFn: () => addToCart({ variantId: variant!.id, quantity, sellingPlanId }),
     onSuccess: () => {
-      toast.success(`${product?.title} added to cart`, { action: { label: "View cart", onClick: () => router.push("/cart") } });
+      const how = sellingPlanId ? "set up to auto-ship" : "added to cart";
+      toast.success(`${product?.title} ${how}`, { action: { label: "View cart", onClick: () => router.push("/cart") } });
     },
     onError: (err) => toast.error(errorMessage(err, "Couldn't add to cart")),
   });
@@ -70,7 +74,9 @@ export function ProductScreen({ handle }: { handle: string }) {
   const stock = resolveStock(product, product.stock);
   const soldOut = stock.state === "sold_out" || !variant.availableForSale;
   const priceCents = variant.priceCents ?? product.priceCents;
-  const earn = product.pawPointsPack ? 0 : Math.floor((priceCents * quantity) / 100);
+  const offer = product.subscription && product.subscription.plans.length > 0 ? product.subscription : null;
+  const effectiveUnitCents = offer && sellingPlanId ? Math.round((priceCents * (100 - offer.basePercent)) / 100) : priceCents;
+  const earn = product.pawPointsPack ? 0 : Math.floor((effectiveUnitCents * quantity) / 100);
   const image = product.images[imageIndex] ?? product.images[0];
   const maxQty = Math.max(1, Math.min(99, variant.quantityAvailable && variant.quantityAvailable > 0 && variant.quantityAvailable < 9999 ? variant.quantityAvailable : 99));
 
@@ -158,10 +164,28 @@ export function ProductScreen({ handle }: { handle: string }) {
             </div>
           )}
 
+          {offer && !soldOut && (
+            <SubscribeOption
+              offer={offer}
+              value={sellingPlanId}
+              onChange={setSellingPlanId}
+              unitPriceCents={priceCents}
+              currency={product.currency}
+            />
+          )}
+
           <div className="flex flex-wrap items-center gap-3">
             <QuantityStepper value={quantity} onChange={setQuantity} max={maxQty} disabled={soldOut || add.isPending} />
             <Button size="lg" className="h-11 flex-1 min-w-40" onClick={() => add.mutate()} disabled={soldOut || add.isPending}>
-              {add.isPending ? <Loader2Icon className="animate-spin" /> : soldOut ? "Sold out" : <><ShoppingCartIcon data-icon="inline-start" /> Add to cart</>}
+              {add.isPending ? (
+                <Loader2Icon className="animate-spin" />
+              ) : soldOut ? (
+                "Sold out"
+              ) : (
+                <>
+                  <ShoppingCartIcon data-icon="inline-start" /> {sellingPlanId ? "Subscribe & save" : "Add to cart"}
+                </>
+              )}
             </Button>
           </div>
 
