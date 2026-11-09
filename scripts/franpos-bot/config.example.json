@@ -1,0 +1,28 @@
+{
+  "$comment": "Selectors for the Franpos back office. Copy to config.json (or point FRANPOS_EXPORT_CONFIG at it) and adjust after a `--record` run. Comma-separated selectors are tried in order.",
+  "login": {
+    "usernameSelector": "input[name='username'], input[name='email'], input[type='email'], #username, #email, input[placeholder*='user' i], input[placeholder*='email' i]",
+    "passwordSelector": "input[name='password'], input[type='password'], #password",
+    "submitSelector": "button[type='submit'], input[type='submit'], button:has-text('Log in'), button:has-text('Login'), button:has-text('Sign in')",
+    "successSelector": "nav, [role='navigation'], a:has-text('Logout'), a:has-text('Sign out'), .dashboard",
+    "timeoutMs": 45000
+  },
+  "report": {
+    "url": "https://backoffice.example-franpos.com/inventory/report",
+    "mode": "download",
+    "steps": [
+      { "$comment": "Optional clicks/fills/selects before the export, e.g. choosing a location or report type.", "action": "waitFor", "selector": "body" }
+    ],
+    "downloadSelector": "a:has-text('Export'), button:has-text('Export'), a:has-text('CSV'), button:has-text('CSV'), a[download], a[href$='.csv']",
+    "downloadTimeoutMs": 120000,
+    "table": {
+      "selector": "table",
+      "columnMap": {
+        "$comment": "Optional: rename scraped header text → import column names. Leave empty to keep the page's headers.",
+        "Item": "Item Name",
+        "QOH": "Quantity On Hand"
+      }
+    }
+  },
+  "navigationTimeoutMs": 60000
+}
