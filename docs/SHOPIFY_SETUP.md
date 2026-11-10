@@ -142,8 +142,8 @@ the depot can match them.
 | Title | Handle | SKU | Price | Tag |
 | --- | --- | --- | --- | --- |
 | Paw Points Pack · 100 | `paw-points-100` | `PP-100` | $4.99 | `paw-points:100` |
-| Paw Points Pack · 300 | `paw-points-300` | `PP-300` | $12.99 | `paw-points:300` |
-| Paw Points Pack · 1000 | `paw-points-1000` | `PP-1000` | $34.99 | `paw-points:1000` |
+| Paw Points Pack · 300 | `paw-points-300` | `PP-300` | $14.25 | `paw-points:300` |
+| Paw Points Pack · 1000 | `paw-points-1000` | `PP-1000` | $45.00 | `paw-points:1000` |
 
 Rules: tag exactly `paw-points:<n>` (that is how `pawPointsPack` is detected in the app and how the
 `orders/paid` handler decides how many points to grant; the SKU `PP-<n>` is the fallback), untick

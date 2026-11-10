@@ -37,8 +37,8 @@ import type { PointsPack, PointsSummary } from "@/types/points";
 
 const DEFAULT_PACKS: PointsPack[] = [
   { sku: "PP-100", points: 100, priceCents: 499, handle: "paw-points-100" },
-  { sku: "PP-300", points: 300, priceCents: 1299, handle: "paw-points-300" },
-  { sku: "PP-1000", points: 1000, priceCents: 3499, handle: "paw-points-1000" },
+  { sku: "PP-300", points: 300, priceCents: 1425, handle: "paw-points-300" },
+  { sku: "PP-1000", points: 1000, priceCents: 4500, handle: "paw-points-1000" },
 ];
 
 function QuickAction({ href, icon: Icon, label, tone }: { href: string; icon: LucideIcon; label: string; tone: string }) {

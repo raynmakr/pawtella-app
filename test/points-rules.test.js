@@ -99,7 +99,7 @@ test('describeWays reflects one-time flags', () => {
 
 test('findPack by sku, handle or points', () => {
   assert.equal(findPack({ sku: 'PP-300' }).points, 300);
-  assert.equal(findPack({ points: 1000 }).priceCents, 3499);
+  assert.equal(findPack({ points: 1000 }).priceCents, 4500);
   assert.equal(findPack({ handle: 'paw-points-100' }).sku, 'PP-100');
   assert.equal(findPack({ sku: 'nope' }), null);
 });

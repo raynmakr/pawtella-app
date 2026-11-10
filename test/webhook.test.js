@@ -208,7 +208,7 @@ test('fulfillment type detection: pickup / local delivery / shipping / pickup vi
 
 test('orders/paid with a Paw Points pack grants the pack and does not earn points on it', async () => {
   const user = await makeUser();
-  const pack = { sku: 'PP-300', title: 'Paw Points Pack · 300', quantity: 1, price: '12.99', variant_id: 8000000044, product_id: 7000000044 };
+  const pack = { sku: 'PP-300', title: 'Paw Points Pack · 300', quantity: 1, price: '14.25', variant_id: 8000000044, product_id: 7000000044 };
   const payload = orderPayload({ userId: user.id, email: user.email, lines: [pack, { ...kongLine, quantity: 1 }], shippingLine: PICKUP });
   createdOrders.push(String(payload.id));
   const res = await send({ body: payload });

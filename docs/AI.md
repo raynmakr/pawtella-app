@@ -31,7 +31,7 @@ Video is asynchronous: `POST /api/ai/generate` charges points and starts the job
 - **Free budget:** 30 PP on signup (+10 if referred, +10 if attributed to a partner).
 - **Earning:** 1 PP per $1 of cash subtotal in the store (a 5% reward), plus one-time bonuses (first pet 3, first post 5, first order 10, photo review 5, pet birthday 5/yr, challenge win 50 / runner-up 15, share→signup 10, referral conversion 20, monthly caps on referral earnings).
 - **Store redemption:** min 20 PP, max 50% of the subtotal; implemented as a single-use Shopify discount code with a 24 h hold.
-- **Packs** (Shopify products tagged `paw-points:<n>`): 100 PP $4.99 · 300 PP $12.99 · 1000 PP $34.99.
+- **Packs** (Shopify products tagged `paw-points:<n>`): 100 PP $4.99 · 300 PP $14.25 (5% off store value) · 1000 PP $45.00 (10% off store value). Packs never earn order points or count toward subscription tier spend (they can't be stacked).
 - **Expiry:** 12 months without activity (toggle `expiryEnabled`), with a 30-day warning email.
 - **Abuse limits:** `dailyGenerationCap` per user; referral/share bonuses capped per month.
 
