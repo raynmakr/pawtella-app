@@ -1,7 +1,5 @@
-import "server-only";
-import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
 import GithubSlugger from "github-slugger";
+import { LEGAL_CONTENT } from "./legal-content";
 
 // Keep in sync with the server's lib/legal.js. Displayed/stored version markers.
 export const TERMS_VERSION = "1.0";
@@ -30,21 +28,8 @@ const FALLBACK_TITLE: Record<LegalDocId, string> = {
  * level-2 headings. Slugs are produced with github-slugger so they match the ids rehype-slug adds
  * to the rendered headings, making the TOC links resolve.
  */
-/** Resolve content/legal across the possible build/runtime working directories (local dev, Vercel
- *  with rootDirectory "web", and the traced serverless bundle). The first existing path wins. */
-function resolveContentFile(name: string): string {
-  const cwd = process.cwd();
-  const candidates = [
-    path.join(cwd, "content", "legal", name),
-    path.join(cwd, "web", "content", "legal", name),
-    path.join(cwd, "..", "content", "legal", name),
-  ];
-  return candidates.find((p) => existsSync(p)) ?? candidates[0];
-}
-
 export function loadLegalDoc(doc: LegalDocId): LoadedLegalDoc {
-  const file = resolveContentFile(`${doc}.md`);
-  const markdown = readFileSync(file, "utf8");
+  const markdown = LEGAL_CONTENT[doc];
   const lines = markdown.split("\n");
 
   const title = (lines.find((l) => l.startsWith("# "))?.slice(2) ?? FALLBACK_TITLE[doc]).trim();
