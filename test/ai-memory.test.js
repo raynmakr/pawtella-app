@@ -10,7 +10,10 @@ import {
   getMemory,
   buildMemoryContext,
   setEnabled,
+  setHealthConsent,
   setHealthSummary,
+  hasHealthConsent,
+  scrubSecrets,
   updateFact,
   deleteFact,
   clearMemory,
@@ -53,6 +56,7 @@ test('storeExtraction writes owner, pet, vendor facts and a health summary', asy
     userId,
     conversationId: null,
     pets: [{ id: petId, name: 'Biscuit' }],
+    healthConsent: true,
     extracted: {
       owner: { tone: 'casual', budgetSensitivity: 'price-conscious', preferences: null, household: null, locationCity: 'Toronto' },
       pets: [{ name: 'Biscuit', diet: 'grain-free kibble', allergies: 'chicken', personality: 'anxious', conditions: null, meds: null, vetNotes: null, likes: null, dislikes: null }],
@@ -85,16 +89,69 @@ test('re-extraction updates a fact in place instead of piling up duplicates', as
   assert.equal(rows[0].fact_value, 'fresh cooked food', 'updated to the newest value');
 });
 
-test('payment-like values are scrubbed, never stored', async () => {
+test('payment-like values are scrubbed, never stored verbatim', async () => {
   const userId = await makeUser();
   await storeExtraction({
     userId,
     extracted: { owner: { preferences: 'my card is 4111 1111 1111 1111', tone: 'formal' }, pets: [], vendors: [], healthSummary: null },
   });
   const mem = await getMemory(userId);
-  const keys = mem.facts.map((f) => f.fact_key);
-  assert.ok(!keys.includes('preferences'), 'card number not stored');
-  assert.ok(keys.includes('tone'), 'benign fact still stored');
+  const pref = mem.facts.find((f) => f.fact_key === 'preferences');
+  assert.ok(pref, 'the benign part of the fact is kept');
+  assert.ok(!/4111/.test(pref.fact_value), 'the card number is redacted');
+  assert.ok(pref.fact_value.includes('[redacted]'), 'card number replaced with a redaction marker');
+  assert.ok(mem.facts.some((f) => f.fact_key === 'tone'), 'benign fact still stored');
+});
+
+test('scrubSecrets redacts cards, passwords, one-time codes and government IDs', () => {
+  assert.ok(!/4111/.test(scrubSecrets('card 4111 1111 1111 1111')));
+  assert.ok(!/hunter2/.test(scrubSecrets('my password is hunter2')));
+  assert.ok(!/123456/.test(scrubSecrets('the verification code is 123456')));
+  assert.ok(!/987654321/.test(scrubSecrets('SIN 987 654 321')));
+  assert.ok(!/078051120/.test(scrubSecrets('SSN 078-05-1120')));
+  // Benign numbers survive.
+  assert.equal(scrubSecrets('Biscuit weighs 12 kg'), 'Biscuit weighs 12 kg');
+});
+
+test('pet health facts and summary need express consent; withdrawing it deletes them', async () => {
+  const userId = await makeUser();
+  const petId = await makePet(userId, 'Biscuit');
+  const pets = [{ id: petId, name: 'Biscuit' }];
+  const extracted = {
+    owner: { tone: 'casual' },
+    pets: [{ name: 'Biscuit', diet: 'kibble', allergies: 'chicken', conditions: 'arthritis', meds: 'carprofen' }],
+    vendors: [],
+    healthSummary: 'Discussed joint pain.',
+  };
+
+  // No consent: health fields (allergies/conditions/meds) and the summary are not stored.
+  await storeExtraction({ userId, pets, extracted, healthConsent: false });
+  let mem = await getMemory(userId);
+  const keys = () => mem.facts.map((f) => f.fact_key);
+  assert.ok(keys().includes('biscuit.diet'), 'non-health pet fact is stored');
+  assert.ok(!keys().includes('biscuit.allergies'), 'allergies not stored without consent');
+  assert.ok(!keys().includes('biscuit.conditions'), 'conditions not stored without consent');
+  assert.equal(mem.healthSummary, null, 'no health summary without consent');
+  assert.equal(mem.healthConsent, false);
+
+  // Consent given: health fields and summary are stored.
+  await setHealthConsent(userId, true);
+  assert.equal(await hasHealthConsent(userId), true);
+  await storeExtraction({ userId, pets, extracted, healthConsent: true });
+  mem = await getMemory(userId);
+  assert.ok(keys().includes('biscuit.allergies'), 'allergies stored with consent');
+  assert.ok(keys().includes('biscuit.meds'), 'meds stored with consent');
+  assert.ok(mem.healthSummary?.includes('joint pain'));
+
+  // Withdrawing consent deletes stored health facts and the summary, keeps non-health facts.
+  await setHealthConsent(userId, false);
+  mem = await getMemory(userId);
+  assert.ok(keys().includes('biscuit.diet'), 'non-health fact kept');
+  assert.ok(!keys().includes('biscuit.allergies'), 'allergies deleted on withdrawal');
+  assert.ok(!keys().includes('biscuit.conditions'), 'conditions deleted on withdrawal');
+  assert.ok(!keys().includes('biscuit.meds'), 'meds deleted on withdrawal');
+  assert.equal(mem.healthSummary, null, 'summary deleted on withdrawal');
+  assert.equal(mem.healthConsent, false);
 });
 
 test('buildMemoryContext renders a compact block and respects the off toggle', async () => {
@@ -103,6 +160,7 @@ test('buildMemoryContext renders a compact block and respects the off toggle', a
   await storeExtraction({
     userId,
     pets: [{ id: petId, name: 'Biscuit' }],
+    healthConsent: true,
     extracted: { owner: { tone: 'casual' }, pets: [{ name: 'Biscuit', allergies: 'chicken' }], vendors: [], healthSummary: 'Discussed itchy skin.' },
   });
   const ctx = await buildMemoryContext(userId, { pets: [{ id: petId, name: 'Biscuit' }] });
@@ -132,6 +190,7 @@ test('settings mutations: edit, delete, set summary, clear everything', async ()
   mem = await getMemory(userId);
   assert.ok(!mem.facts.some((f) => f.id === prefFact.id));
 
+  await setHealthConsent(userId, true);
   await setHealthSummary(userId, 'Talked about dental care.');
   mem = await getMemory(userId);
   assert.equal(mem.healthSummary, 'Talked about dental care.');

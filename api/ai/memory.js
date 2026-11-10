@@ -10,6 +10,7 @@ import { camelize } from '../../lib/serialize.js';
 import {
   getMemory,
   setEnabled,
+  setHealthConsent,
   setHealthSummary,
   updateFact,
   deleteFact,
@@ -43,6 +44,7 @@ export default route({
     const b = body(req);
     if (seg.length === 0) {
       if (typeof b.enabled === 'boolean') await setEnabled(userId, b.enabled);
+      if (typeof b.healthConsent === 'boolean') await setHealthConsent(userId, b.healthConsent);
       if (b.healthSummary !== undefined) await setHealthSummary(userId, typeof b.healthSummary === 'string' ? b.healthSummary : null);
       return serialize(await getMemory(userId));
     }
