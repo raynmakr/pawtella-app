@@ -222,7 +222,7 @@ If a breach of security safeguards involving personal information under our cont
 
 ## 16. Contact Our Privacy Officer
 
-**Privacy Officer:** [Privacy Officer name and title]
+**Privacy Officer:** Privacy Officer
 **Bone & Biscuit College West** (operating as Pawtella)
 891 College St, Toronto, ON M6H 1A1, Canada
 Email: **[privacy@pawtella.com]** (general inquiries: hello@pawtella.com)
