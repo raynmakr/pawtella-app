@@ -7,6 +7,12 @@ import { cn } from "@/lib/utils";
  * (right), simple oval eyes, a rounded nose, a cat "‿‿" smile, whiskers, freckles and a small
  * coral dot by the dog ear.
  *
+ * Geometry is traced from the reference bitmap (1024px space) so the component shares that mark's
+ * coordinates. The head is a single rounded blob; the cat ear is a separate path whose base edge is
+ * the exact reverse of the head's top-left shoulder, so the two thick strokes coincide and the ear
+ * joins the head with no seam — while still being its own group so a pose can tilt it. The folded
+ * dog ear sits behind the head and pokes out to the right.
+ *
  * `variant="full"` frames the whole face with room for a pose's small props (a waving paw, thought
  * dots, "z z z", sparkles, a tear) — used at hero / empty / loading / success / error moments.
  * `variant="mark"` is the tight head used in the logo lockup and app icons.
@@ -36,6 +42,32 @@ const CREAM = "#fdf1dc";
 const CORAL = "#ff6b4a";
 const CORAL_SOFT = "#ffd9cf";
 
+/** Thick, round-capped outline — measured ~23px in the 1024px reference space. */
+const STROKE = 23;
+
+// Head blob (no ear): the top-left runs as a smooth shoulder from (304,250) to (436,232).
+const HEAD_PATH =
+  "M304,250 C330,242 392,234 436,232 C500,236 560,236 660,244 C708,258 724,300 720,352 " +
+  "C726,410 724,472 706,520 C684,566 648,592 600,606 C540,624 430,628 360,606 " +
+  "C318,590 296,556 286,512 C274,470 270,420 282,350 C276,300 290,256 304,250 Z";
+// Cat ear — its base edge (436,232)→(304,250) is the exact reverse of the head shoulder, so the
+// two strokes coincide and the join is seamless.
+const CAT_EAR_PATH =
+  "M304,250 C300,206 318,158 334,150 C340,145 344,148 348,156 C374,182 410,214 436,232 " +
+  "C392,234 330,242 304,250 Z";
+const CAT_EAR_HI_PATH =
+  "M322,196 C314,224 312,244 318,250 C354,246 392,238 412,228 C388,206 352,190 336,186 " +
+  "C330,185 326,188 322,196 Z";
+// Folded dog ear (behind head): a small fold-nub top-left, a leaf bulging right, pointed at bottom.
+const DOG_EAR_PATH =
+  "M606,240 C624,212 646,202 660,210 C668,216 666,232 656,248 C700,258 740,278 756,316 " +
+  "C766,344 756,380 732,404 C712,426 698,442 688,450 C676,436 666,406 658,366 " +
+  "C650,328 644,286 632,262 C622,248 600,252 606,240 Z";
+const DOG_EAR_HI_PATH =
+  "M664,266 C698,274 730,298 740,332 C748,360 738,392 718,408 C702,394 688,360 680,320 " +
+  "C672,288 662,272 664,266 Z";
+const NOSE_PATH = "M470,430 C470,416 544,416 544,430 C544,454 519,478 507,478 C495,478 470,454 470,430 Z";
+
 const OPEN_EYE_POSES: ReadonlySet<PipPose> = new Set<PipPose>(["happy", "wave", "thinking"]);
 
 export function Mascot({
@@ -53,7 +85,7 @@ export function Mascot({
 
   return (
     <svg
-      viewBox={isMark ? "212 140 576 516" : "96 104 812 740"}
+      viewBox={isMark ? "224 128 544 540" : "96 104 812 740"}
       className={cn("block h-auto w-24 overflow-visible", float && animate && "pip-float", className)}
       role={labelled ? "img" : undefined}
       aria-hidden={labelled ? undefined : true}
@@ -69,32 +101,18 @@ export function Mascot({
 function PipFace({ pose, animate }: { pose: PipPose; animate: boolean }) {
   return (
     <>
-      <CatEar pose={pose} animate={animate} />
+      {/* Folded dog ear (right), drawn behind the head so it only pokes out to the side */}
+      <path d={DOG_EAR_PATH} fill={EAR} stroke={DEEP} strokeWidth={STROKE} strokeLinejoin="round" />
+      <path d={DOG_EAR_HI_PATH} fill={EAR_HI2} />
 
       {/* Face blob */}
-      <path
-        d="M410,250 C492,212 578,206 646,236 C720,266 782,338 778,428 C774,510 744,568 690,598 C630,632 558,636 498,633 C438,630 356,616 316,579 C282,549 267,500 272,439 C275,392 282,352 300,322 C318,280 350,256 410,250 Z"
-        fill={CREAM}
-        stroke={DEEP}
-        strokeWidth={17}
-        strokeLinejoin="round"
-      />
+      <path d={HEAD_PATH} fill={CREAM} stroke={DEEP} strokeWidth={STROKE} strokeLinejoin="round" />
 
-      {/* Dog ear (right, folded) */}
-      <path
-        d="M636,226 C678,201 724,205 751,239 C780,274 789,338 778,400 C769,444 744,470 713,463 C688,457 670,424 658,386 C646,348 629,298 631,266 C632,248 630,234 636,226 Z"
-        fill={EAR}
-        stroke={DEEP}
-        strokeWidth={17}
-        strokeLinejoin="round"
-      />
-      <path
-        d="M664,270 C694,260 719,274 727,316 C733,352 723,398 704,416 C689,409 676,376 668,340 C661,310 658,286 664,270 Z"
-        fill={EAR_HI2}
-      />
+      {/* Pointy cat ear (left) — seamless with the head, tiltable for poses */}
+      <CatEar pose={pose} animate={animate} />
 
       {/* Coral dot */}
-      <circle cx={713} cy={180} r={33} fill={CORAL} />
+      <circle cx={710} cy={192} r={31} fill={CORAL} />
 
       {/* Eyes */}
       <g className={animate && OPEN_EYE_POSES.has(pose) ? "pip-eyes" : undefined}>
@@ -102,24 +120,24 @@ function PipFace({ pose, animate }: { pose: PipPose; animate: boolean }) {
       </g>
 
       {/* Nose */}
-      <path d="M468,434 C468,421 542,421 542,434 C542,457 517,480 505,480 C493,480 468,457 468,434 Z" fill={DEEP} />
+      <path d={NOSE_PATH} fill={DEEP} />
 
       {/* Mouth */}
       <Mouth pose={pose} />
 
       {/* Whiskers */}
       <g fill="none" stroke={DEEP} strokeWidth={11} strokeLinecap="round">
-        <path d="M318,472 C280,464 250,462 228,454" />
-        <path d="M315,502 C276,502 246,504 224,502" />
-        <path d="M322,532 C286,538 258,546 240,554" />
-        <path d="M692,476 C726,470 750,470 768,464" />
-        <path d="M696,504 C730,506 754,508 772,510" />
+        <path d="M320,470 C286,462 258,460 236,452" />
+        <path d="M318,500 C282,500 254,502 232,500" />
+        <path d="M324,530 C290,536 264,544 246,552" />
+        <path d="M694,474 C724,468 748,468 766,462" />
+        <path d="M696,502 C726,504 750,506 768,508" />
       </g>
 
       {/* Freckles */}
       <g fill={DEEP}>
-        <circle cx={432} cy={480} r={8} />
-        <circle cx={578} cy={480} r={8} />
+        <circle cx={403} cy={469} r={8} />
+        <circle cx={621} cy={469} r={8} />
       </g>
     </>
   );
@@ -128,20 +146,10 @@ function PipFace({ pose, animate }: { pose: PipPose; animate: boolean }) {
 function CatEar({ pose, animate }: { pose: PipPose; animate: boolean }) {
   const tilt = pose === "celebrating" ? -7 : pose === "wave" ? -4 : pose === "sad" ? 9 : 0;
   return (
-    <g transform={tilt ? `rotate(${tilt} 330 312)` : undefined}>
+    <g transform={tilt ? `rotate(${tilt} 370 246)` : undefined}>
       <g className={animate ? "pip-ear" : undefined}>
-        <path
-          d="M296,322 C286,268 282,206 300,150 C322,206 364,240 404,258 C372,300 330,320 296,322 Z"
-          fill={EAR}
-          stroke={DEEP}
-          strokeWidth={17}
-          strokeLinejoin="round"
-        />
-        <path
-          d="M306,210 C302,254 304,294 312,314 C342,310 368,294 384,266 C360,240 334,222 306,210 Z"
-          fill={EAR_HI}
-          opacity={0.6}
-        />
+        <path d={CAT_EAR_PATH} fill={EAR} stroke={DEEP} strokeWidth={STROKE} strokeLinejoin="round" />
+        <path d={CAT_EAR_HI_PATH} fill={EAR_HI} />
       </g>
     </g>
   );
@@ -151,16 +159,16 @@ function Eyes({ pose }: { pose: PipPose }) {
   if (pose === "sleeping") {
     return (
       <g fill="none" stroke={DEEP} strokeWidth={14} strokeLinecap="round">
-        <path d="M388,406 Q416,430 444,406" />
-        <path d="M572,406 Q600,430 628,406" />
+        <path d="M388,400 Q416,424 444,400" />
+        <path d="M579,400 Q607,424 635,400" />
       </g>
     );
   }
   if (pose === "celebrating") {
     return (
       <g fill="none" stroke={DEEP} strokeWidth={15} strokeLinecap="round">
-        <path d="M388,410 Q416,382 444,410" />
-        <path d="M572,410 Q600,382 628,410" />
+        <path d="M388,404 Q416,376 444,404" />
+        <path d="M579,404 Q607,376 635,404" />
       </g>
     );
   }
@@ -168,22 +176,22 @@ function Eyes({ pose }: { pose: PipPose }) {
     return (
       <>
         <g fill={DEEP}>
-          <ellipse cx={416} cy={412} rx={24} ry={30} />
-          <ellipse cx={600} cy={412} rx={24} ry={30} />
+          <ellipse cx={416} cy={406} rx={22} ry={28} />
+          <ellipse cx={607} cy={406} rx={22} ry={28} />
         </g>
         <g fill="none" stroke={DEEP} strokeWidth={13} strokeLinecap="round">
-          <path d="M386,372 Q410,366 432,378" />
-          <path d="M618,372 Q594,366 572,378" />
+          <path d="M386,366 Q410,360 432,372" />
+          <path d="M625,366 Q601,360 579,372" />
         </g>
       </>
     );
   }
   // open eyes (happy, wave, thinking) — thinking glances up a touch
-  const cy = pose === "thinking" ? 398 : 404;
+  const cy = pose === "thinking" ? 392 : 398;
   return (
     <g fill={DEEP}>
-      <ellipse cx={416} cy={cy} rx={26} ry={35} />
-      <ellipse cx={600} cy={cy} rx={26} ry={35} />
+      <ellipse cx={416} cy={cy} rx={23} ry={28} />
+      <ellipse cx={607} cy={cy} rx={23} ry={28} />
     </g>
   );
 }
@@ -192,41 +200,41 @@ function Mouth({ pose }: { pose: PipPose }) {
   if (pose === "sad") {
     return (
       <g fill="none" stroke={DEEP} strokeWidth={13} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M505,480 L505,500" />
-        <path d="M470,524 Q505,500 540,524" />
+        <path d="M507,478 L507,500" />
+        <path d="M472,524 Q507,500 542,524" />
       </g>
     );
   }
   if (pose === "sleeping") {
     return (
       <g fill="none" stroke={DEEP} strokeWidth={12} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M505,484 L505,502" />
-        <path d="M486,506 Q505,520 524,506" />
+        <path d="M507,480 L507,500" />
+        <path d="M488,504 Q507,518 526,504" />
       </g>
     );
   }
   if (pose === "celebrating") {
     return (
       <g stroke={DEEP} strokeWidth={13} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M505,480 L505,498" fill="none" />
-        <path d="M466,500 Q505,556 544,500 Q505,516 466,500 Z" fill={DEEP} />
+        <path d="M507,478 L507,496" fill="none" />
+        <path d="M468,498 Q507,554 546,498 Q507,514 468,498 Z" fill={DEEP} />
       </g>
     );
   }
   if (pose === "thinking") {
     return (
       <g fill="none" stroke={DEEP} strokeWidth={13} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M505,482 L505,506" />
-        <path d="M486,510 Q505,524 524,510" />
+        <path d="M507,478 L507,504" />
+        <path d="M488,508 Q507,522 526,508" />
       </g>
     );
   }
   // happy / wave — cat smile
   return (
     <g fill="none" stroke={DEEP} strokeWidth={13} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M505,482 L505,506" />
-      <path d="M505,506 C498,530 470,532 456,512" />
-      <path d="M505,506 C512,530 540,532 554,512" />
+      <path d="M507,478 L507,502" />
+      <path d="M507,502 C500,528 470,530 456,508" />
+      <path d="M507,502 C514,528 544,530 558,508" />
     </g>
   );
 }
