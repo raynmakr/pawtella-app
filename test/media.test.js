@@ -11,7 +11,7 @@ import { promisify } from 'node:util';
 import ffmpegPath from 'ffmpeg-static';
 import sharp from 'sharp';
 import { processImage } from '../lib/images.js';
-import { processVideo, probe } from '../lib/video.js';
+import { processVideo, probe, extractPoster } from '../lib/video.js';
 import * as media from '../lib/media.js';
 
 const exec = promisify(execFile);
@@ -61,6 +61,22 @@ test('processVideo: transcodes to <=720p faststart MP4 with a poster', async () 
     assert.ok(head.includes('moov') && head.indexOf('moov') < head.indexOf('mdat'), 'moov atom precedes mdat (faststart)');
     const posterMeta = await sharp(fs.readFileSync(outPoster)).metadata();
     assert.equal(posterMeta.format, 'jpeg');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('extractPoster writes a JPEG frame without re-encoding', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'poster-'));
+  try {
+    const src = path.join(dir, 'src.mp4');
+    await exec(ffmpegPath, ['-y', '-f', 'lavfi', '-i', 'testsrc=duration=2:size=1280x720:rate=24', '-pix_fmt', 'yuv420p', '-c:v', 'libx264', src]);
+    const poster = path.join(dir, 'p.jpg');
+    const info = await extractPoster(src, poster);
+    assert.equal(info.width, 1280);
+    assert.equal(info.height, 720);
+    assert.ok(fs.statSync(poster).size > 0);
+    assert.equal((await sharp(fs.readFileSync(poster)).metadata()).format, 'jpeg');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

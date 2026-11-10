@@ -10,6 +10,10 @@
       "maxDuration": 300,
       "includeFiles": "{lib/**,node_modules/ffmpeg-static/**}"
     },
+    "api/ai/generate.js": {
+      "maxDuration": 120,
+      "includeFiles": "{lib/**,node_modules/ffmpeg-static/**}"
+    },
     "api/**/*.js": {
       "maxDuration": 60,
       "includeFiles": "lib/**"
