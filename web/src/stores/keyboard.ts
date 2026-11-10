@@ -9,9 +9,23 @@ interface KeyboardState {
   viewportHeight: number;
   /** `window.visualViewport.offsetTop` — how far the layout viewport is scrolled under the visible area. */
   offsetTop: number;
+  /** `window.innerHeight` at last measure — the full layout viewport height. */
+  innerHeight: number;
+  /**
+   * Distance (px) from the bottom of the window to where the composer's bottom edge should
+   * sit: the keyboard inset plus, on iOS, an allowance for the iOS 26 floating accessory bar
+   * that hovers above the keyboard and would otherwise cover the composer.
+   */
+  bottomInset: number;
   /** A text field (textarea/input/contenteditable) is focused on a touch device. */
   focused: boolean;
-  set: (next: { inset: number; viewportHeight: number; offsetTop: number }) => void;
+  set: (next: {
+    inset: number;
+    viewportHeight: number;
+    offsetTop: number;
+    innerHeight: number;
+    bottomInset: number;
+  }) => void;
   setFocused: (focused: boolean) => void;
 }
 
@@ -19,10 +33,16 @@ export const useKeyboardStore = create<KeyboardState>((set) => ({
   inset: 0,
   viewportHeight: 0,
   offsetTop: 0,
+  innerHeight: 0,
+  bottomInset: 0,
   focused: false,
   set: (next) =>
     set((s) =>
-      s.inset === next.inset && s.viewportHeight === next.viewportHeight && s.offsetTop === next.offsetTop
+      s.inset === next.inset &&
+      s.viewportHeight === next.viewportHeight &&
+      s.offsetTop === next.offsetTop &&
+      s.innerHeight === next.innerHeight &&
+      s.bottomInset === next.bottomInset
         ? s
         : { ...s, ...next },
     ),

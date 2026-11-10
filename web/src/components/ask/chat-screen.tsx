@@ -10,7 +10,7 @@ import { ErrorState } from "@/components/error-state";
 import { PetChips } from "@/components/pet-chips";
 import { toast } from "sonner";
 import { useSession } from "@/stores/session";
-import { useKeyboardOpen } from "@/stores/keyboard";
+import { useKeyboardOpen, useKeyboardStore } from "@/stores/keyboard";
 import { useConversation, useSendMessage } from "@/hooks/use-chat";
 import { useAiMemory, useAiMemoryMutations } from "@/hooks/use-ai-memory";
 import { errorMessage } from "@/lib/api";
@@ -51,6 +51,7 @@ export function ChatScreen() {
   // floating + hidden, so the composer sits just above the keyboard and the list
   // takes the rest.
   const keyboardOpen = useKeyboardOpen();
+  const showKbDebug = params.get("kbdebug") === "1";
 
   const memory = useAiMemory();
   const { setHealthConsent } = useAiMemoryMutations();
@@ -100,13 +101,14 @@ export function ChatScreen() {
       className={cn(
         "flex flex-col md:static md:h-[calc(100dvh-5rem)] md:flex-row md:gap-6 md:bg-transparent md:px-0 md:pt-0",
         keyboardOpen
-          ? // Fixed overlay pinned to the visual viewport (top + height from CSS vars the
-            // KeyboardListener keeps in sync) so iOS can't slide the composer under the keyboard.
+          ? // Fixed overlay anchored by top AND bottom (CSS vars the KeyboardListener keeps in
+            // sync) so iOS can't slide the composer under the keyboard or the accessory bar.
             "fixed inset-x-0 z-40 bg-background px-4 pt-2 pb-2 sm:px-6"
           : "h-[calc(100dvh-9.75rem)]",
       )}
-      style={keyboardOpen ? { top: "var(--viewport-offset-top, 0px)", height: "var(--viewport-height, 100dvh)" } : undefined}
+      style={keyboardOpen ? { top: "var(--viewport-offset-top, 0px)", bottom: "var(--composer-bottom-inset, 0px)" } : undefined}
     >
+      {showKbDebug && <KbDebug />}
       <aside className="hidden w-64 shrink-0 md:block">{list}</aside>
 
       <section className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -217,6 +219,21 @@ export function ChatScreen() {
           <div className="min-h-0 flex-1">{list}</div>
         </SheetContent>
       </Sheet>
+    </div>
+  );
+}
+
+/** Diagnostic overlay enabled with `?kbdebug=1` — read the keyboard geometry off a screenshot. */
+function KbDebug() {
+  const { innerHeight, viewportHeight, offsetTop, inset, bottomInset, focused } = useKeyboardStore();
+  return (
+    <div className="pointer-events-none fixed left-1 top-1 z-[100] rounded-md bg-black/80 px-2 py-1 font-mono text-[10px] leading-tight text-lime-300">
+      <div>innerHeight: {Math.round(innerHeight)}</div>
+      <div>vv.height: {Math.round(viewportHeight)}</div>
+      <div>vv.offsetTop: {Math.round(offsetTop)}</div>
+      <div>inset: {Math.round(inset)}</div>
+      <div>bottomInset: {Math.round(bottomInset)}</div>
+      <div>focused: {String(focused)}</div>
     </div>
   );
 }
