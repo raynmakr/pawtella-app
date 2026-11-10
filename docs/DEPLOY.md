@@ -1,6 +1,6 @@
 # Deploying Pawtella
 
-Two deployables: the **API** (this repo's root → Vercel) and the **mobile app** (`mobile/` → EAS Build / app stores). Third parties: Neon (Postgres), Shopify (store), Cloudinary (media), Anthropic (Claude), xAI (Grok Imagine), Resend (email).
+Two deployables: the **API** (this repo's root → Vercel) and the **mobile app** (`mobile/` → EAS Build / app stores). Third parties: Neon (Postgres + Object Storage for media), Shopify (store), Anthropic (Claude), xAI (Grok Imagine), Resend (email).
 
 ## 1. Database (Neon)
 
@@ -30,7 +30,7 @@ Two deployables: the **API** (this repo's root → Vercel) and the **mobile app*
 | Service | Where | Env vars | Notes |
 |---|---|---|---|
 | Shopify | see `docs/SHOPIFY_SETUP.md` | `SHOPIFY_*` | Storefront token for catalog/cart, Admin token for discounts/gift cards/inventory, webhook secret |
-| Cloudinary | cloudinary.com → Settings → API keys | `CLOUDINARY_*` | Upload the watermark PNG as `pawtella/watermark` |
+| Neon Object Storage | Neon console → project → Storage → bucket `pawtella-media` (public_read) → create S3 credentials | `MEDIA_S3_*`, `MEDIA_PUBLIC_BASE_URL` | S3-compatible, path-style. Secrets are the access key id/secret; endpoint/region/bucket/public base are non-secret. Missing secrets → data-URL mock mode |
 | Anthropic | console.anthropic.com | `ANTHROPIC_API_KEY` | Models in `CLAUDE_MODEL_CHAT` / `CLAUDE_MODEL_FAST` |
 | xAI | console.x.ai | `XAI_API_KEY` | Models in `XAI_*_MODEL` |
 | Resend | resend.com → verify your sending domain | `RESEND_API_KEY`, `FROM_EMAIL` | Required for lifecycle emails and password reset |

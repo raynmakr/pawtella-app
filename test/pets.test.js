@@ -250,19 +250,24 @@ test('public profile: counts, isFollowing, pets, posts with cursor pagination', 
   assert.equal(blocked.status, 404);
 });
 
-test('upload: signed params in mock mode and the dev mock uploader', async () => {
+test('upload: presign descriptor in mock mode and the dev mock uploader', async () => {
   const { token } = await registerUser();
-  assert.equal(media.isMock, true, 'tests run without Cloudinary keys');
-  const noAuth = await call(uploadHandler, 'POST', '/api/upload', { body: { kind: 'image' } });
+  assert.equal(media.isMock, true, 'tests run without object-storage keys');
+  const noAuth = await call(uploadHandler, 'POST', '/api/upload', { body: { kind: 'image', contentType: 'image/jpeg' } });
   assert.equal(noAuth.status, 401);
-  const signed = await call(uploadHandler, 'POST', '/api/upload', { token, body: { kind: 'video', folder: 'pets' } });
+  const signed = await call(uploadHandler, 'POST', '/api/upload', { token, body: { kind: 'video', contentType: 'video/mp4' } });
   assert.equal(signed.status, 200, JSON.stringify(signed.body));
   assert.equal(signed.body.mock, true);
   assert.ok(signed.body.uploadUrl.endsWith('/api/upload/mock'));
-  assert.ok(signed.body.folder.endsWith('/pets'));
-  assert.equal(signed.body.resourceType, 'video');
-  const badKind = await call(uploadHandler, 'POST', '/api/upload', { token, body: { kind: 'audio' } });
+  assert.equal(signed.body.kind, 'video');
+  const badKind = await call(uploadHandler, 'POST', '/api/upload', { token, body: { kind: 'audio', contentType: 'audio/mp3' } });
   assert.equal(badKind.status, 400);
+  // Unsupported content types are rejected at presign time.
+  const badType = await call(uploadHandler, 'POST', '/api/upload', { token, body: { kind: 'image', contentType: 'application/pdf' } });
+  assert.equal(badType.status, 400);
+  // Oversized declared size is rejected with 413.
+  const tooBigSign = await call(uploadHandler, 'POST', '/api/upload', { token, body: { kind: 'image', contentType: 'image/jpeg', size: media.IMAGE_MAX_BYTES + 1 } });
+  assert.equal(tooBigSign.status, 413);
 
   const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
   const up = await call(uploadHandler, 'POST', '/api/upload/mock', { token, body: { dataUrl } });
@@ -276,10 +281,13 @@ test('upload: signed params in mock mode and the dev mock uploader', async () =>
   const tooBig = await call(uploadHandler, 'POST', '/api/upload/mock', { token, body: { dataUrl: huge } });
   assert.equal(tooBig.status, 413, JSON.stringify(tooBig.body).slice(0, 120));
 
-  // Mock-mode URL helpers pass the input through.
-  assert.equal(media.watermarkedUrl({ publicId: 'https://x/y.mp4', resourceType: 'video', handle: 'rex' }), 'https://x/y.mp4');
-  assert.equal(media.thumbnailUrl({ publicId: 'https://x/y.jpg' }), 'https://x/y.jpg');
-  const copied = await media.uploadFromUrl('https://x/z.mp4', { folder: 'pawtella/gen', resourceType: 'video' });
-  assert.equal(copied.secureUrl, 'https://x/z.mp4');
-  assert.ok(copied.publicId.startsWith('pawtella/gen/'));
+  // completeImageUpload is a 404 in mock mode (storage-less); the data-URL path is used instead.
+  const complete = await call(uploadHandler, 'POST', '/api/upload/complete', { token, body: { key: 'm/ab/whatever.jpg' } });
+  assert.equal(complete.status, 404);
+
+  // Mock media helpers pass the input through (no network/storage).
+  const copied = await media.storeFromUrl('https://x/z.mp4', { kind: 'video' });
+  assert.equal(copied.url, 'https://x/z.mp4');
+  assert.equal(copied.thumbnailUrl, 'https://x/z.mp4');
+  assert.equal((await media.deleteAsset('https://x/z.mp4')).ok, true);
 });

@@ -5,7 +5,6 @@ import { one, withTransaction } from '../lib/db.js';
 import { env } from '../lib/env.js';
 import { track, EVENT } from '../lib/events.js';
 import { getOrCreateReferralCode } from '../lib/referrals.js';
-import { watermarkedUrl } from '../lib/media.js';
 import {
   createPost,
   listFeed,
@@ -85,7 +84,7 @@ async function POST(req, res) {
   // POST /api/posts
   if (seg.length === 0) {
     const b = body(req);
-    const { mediaUrl, mediaType, thumbnailUrl, petId, generationId, challengeId, caption, featureConsent } = b;
+    const { mediaUrl, mediaType, thumbnailUrl, mediaKey, petId, generationId, challengeId, caption, featureConsent } = b;
     if (!mediaUrl || typeof mediaUrl !== 'string') throw badRequest('mediaUrl is required');
     if (!MEDIA_TYPES.includes(mediaType)) throw badRequest(`mediaType must be one of ${MEDIA_TYPES.join(', ')}`);
     if (caption !== undefined && caption !== null && (typeof caption !== 'string' || caption.length > MAX_CAPTION)) {
@@ -100,6 +99,9 @@ async function POST(req, res) {
       const gen = await one(`SELECT id FROM ai_generations WHERE id = $1 AND user_id = $2`, [generationId, userId]);
       if (!gen) throw badRequest('generationId does not belong to you');
     }
+    // A user-uploaded video arrives as the raw original (with its storage key); mark it 'processing'
+    // so the process-media cron transcodes it. The original plays in the feed until then.
+    const willProcess = mediaType === 'video' && typeof mediaKey === 'string' && !!mediaKey;
     const created = await createPost(userId, {
       mediaUrl,
       mediaType,
@@ -112,6 +114,8 @@ async function POST(req, res) {
       width: b.width ?? null,
       height: b.height ?? null,
       durationSeconds: b.durationSeconds ?? null,
+      mediaStatus: willProcess ? 'processing' : 'ready',
+      mediaKey: willProcess ? mediaKey : null,
     });
     const post = await requirePost(created.id, userId);
     res.status(201).json({ post });
@@ -175,33 +179,18 @@ async function POST(req, res) {
     ]);
     await track(EVENT.share_clicked, { userId, props: { postId: id, authorId: post.userId, channel: body(req).channel ?? null } });
     const shareUrl = `${env.appUrl}/p/${id}${code ? `?ref=${encodeURIComponent(code)}` : ''}`;
+    // Hand out a shareable media URL. For AI creations the generation keeps a dedicated share URL;
+    // otherwise the processed post media (poster for videos, the image itself for photos) is used.
     const gen = post.generationId
       ? await one(`SELECT watermarked_url FROM ai_generations WHERE id = $1`, [post.generationId])
       : null;
-    let wm = gen?.watermarked_url || null;
-    if (!wm) {
-      const publicId = cloudinaryPublicId(post.mediaUrl);
-      if (publicId) {
-        try {
-          wm = watermarkedUrl({ publicId, resourceType: post.mediaType, handle: post.author.handle });
-        } catch (err) {
-          console.error('[posts] watermarkedUrl failed', { postId: id, err: err.message });
-        }
-      }
-    }
-    // Mock media returns the bare public id; only hand out real URLs.
+    let wm = gen?.watermarked_url || (post.mediaType === 'video' ? post.thumbnailUrl : post.mediaUrl) || post.mediaUrl;
+    // Only hand out real URLs (mock media may be an inline data URL).
     if (!wm || !/^https?:\/\//.test(wm)) wm = post.mediaUrl;
     return { shareUrl, watermarkedUrl: wm, shareCount: row.share_count };
   }
 
   throw notFound();
-}
-
-/** Best-effort public id extraction from a Cloudinary delivery URL; null for anything else. */
-function cloudinaryPublicId(url) {
-  if (typeof url !== 'string' || !url.includes('res.cloudinary.com/')) return null;
-  const m = url.match(/\/(?:image|video)\/upload\/(?:[^/]+\/)*?(?:v\d+\/)?(.+?)(?:\.[a-z0-9]+)?$/i);
-  return m ? m[1] : null;
 }
 
 /* --------------------------------------- DELETE -------------------------------------- */

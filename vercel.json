@@ -5,6 +5,14 @@
     "api/**/*.js": {
       "maxDuration": 60,
       "includeFiles": "lib/**"
+    },
+    "api/cron/process-media.js": {
+      "maxDuration": 300,
+      "includeFiles": "{lib/**,node_modules/ffmpeg-static/**}"
+    },
+    "api/cron/finalize-generations.js": {
+      "maxDuration": 300,
+      "includeFiles": "{lib/**,node_modules/ffmpeg-static/**}"
     }
   },
   "rewrites": [
@@ -101,6 +109,10 @@
     {
       "path": "/api/cron/finalize-generations",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/process-media",
+      "schedule": "* * * * *"
     },
     {
       "path": "/api/cron/run-automations",

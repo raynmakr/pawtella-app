@@ -22,7 +22,7 @@ Prompts and triage rules live in `lib/ai-assistant.js`. Conversations persist in
 | Video (standard) | `POST /v1/videos/generations` → poll `GET /v1/videos/{id}` | `XAI_VIDEO_MODEL` = `grok-imagine-video-1.5-lite` | ≈ $0.02 / second (720p) |
 | Video (HD) | same | `XAI_VIDEO_MODEL_HD` = `grok-imagine-video-1.5` | ≈ $0.08 / second (1080p) |
 
-Video is asynchronous: `POST /api/ai/generate` charges points and starts the job; the app polls `GET /api/ai/generate/:id`; `api/cron/finalize-generations.js` finishes jobs the client stopped polling and refunds failures. Provider URLs are temporary, so finished media is copied to Cloudinary, which also produces the watermarked share version and thumbnails.
+Video is asynchronous: `POST /api/ai/generate` charges points and starts the job; the app polls `GET /api/ai/generate/:id`; `api/cron/finalize-generations.js` finishes jobs the client stopped polling and refunds failures. Provider URLs are temporary, so finished media is copied into Neon Object Storage (`media.storeFromUrl`): images become sized WebP, videos are transcoded to MP4 with a poster frame used as the thumbnail. `watermarked_url` now equals the processed output URL (no dynamic overlay CDN).
 
 ## Paw Points math (`lib/points-rules.js`)
 

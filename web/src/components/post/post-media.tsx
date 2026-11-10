@@ -22,9 +22,11 @@ interface PostMediaProps {
   priority?: boolean;
   className?: string;
   sizes?: string;
+  /** A user video still being transcoded; the original plays while we show a subtle badge. */
+  processing?: boolean;
 }
 
-export function PostMedia({ src, type, poster, alt = "", width, height, onDoubleLike, clampAspect = true, priority, className, sizes }: PostMediaProps) {
+export function PostMedia({ src, type, poster, alt = "", width, height, onDoubleLike, clampAspect = true, priority, className, sizes, processing }: PostMediaProps) {
   const [burst, setBurst] = useState(0);
   const [broken, setBroken] = useState(false);
   const lastTap = useRef(0);
@@ -56,7 +58,15 @@ export function PostMedia({ src, type, poster, alt = "", width, height, onDouble
       onPointerUp={onPointerUp}
     >
       {type === "video" ? (
-        <AutoplayVideo src={src} poster={poster} />
+        <>
+          <AutoplayVideo src={src} poster={poster} />
+          {processing && (
+            <span className="pointer-events-none absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-background/80 px-2.5 py-1 text-xs font-semibold text-foreground shadow-soft backdrop-blur">
+              <span className="size-2 animate-pulse rounded-full bg-primary" />
+              Optimizing…
+            </span>
+          )}
+        </>
       ) : broken ? (
         <span role="img" aria-label={alt || "Image unavailable"} className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-coral-soft/50 text-primary/60">
           <PawIcon className="size-14" />

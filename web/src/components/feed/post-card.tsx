@@ -30,6 +30,7 @@ export function PostCard({ post, priority }: { post: Post; priority?: boolean })
         alt={post.caption ?? `Post by @${post.author.handle}`}
         onDoubleLike={onDoubleLike}
         priority={priority}
+        processing={post.mediaType === "video" && post.mediaStatus === "processing"}
       />
       <div className="flex items-center gap-1 px-2 pt-2">
         <LikeButton post={post} />

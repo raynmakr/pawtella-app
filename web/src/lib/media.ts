@@ -1,11 +1,13 @@
 /** Hosts next.config.ts allows the image optimizer to fetch. Anything else renders unoptimized. */
-const OPTIMIZED_HOSTS = new Set(["placedog.net", "loremflickr.com", "res.cloudinary.com", "cdn.shopify.com", "cataas.com"]);
+const OPTIMIZED_HOSTS = new Set(["placedog.net", "loremflickr.com", "cdn.shopify.com", "cataas.com"]);
 
 export function isOptimizableImage(src: string | null | undefined): boolean {
   if (!src || src.startsWith("data:") || src.startsWith("blob:")) return false;
   try {
     const u = new URL(src);
-    return u.protocol === "https:" && OPTIMIZED_HOSTS.has(u.hostname);
+    if (u.protocol !== "https:") return false;
+    // Neon Object Storage (the media host) + the static allowlist above.
+    return u.hostname.endsWith(".aws.neon.tech") || OPTIMIZED_HOSTS.has(u.hostname);
   } catch {
     return src.startsWith("/");
   }

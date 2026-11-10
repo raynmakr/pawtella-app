@@ -26,7 +26,8 @@ export interface GridTile {
 }
 
 export function PostTile({ tile, className, sizes = "(min-width: 768px) 33vw, 50vw" }: { tile: GridTile; className?: string; sizes?: string }) {
-  const src = tile.mediaType === "video" ? tile.thumbnailUrl : tile.mediaUrl;
+  // Lists use the small thumbnail variant when available; videos fall back to the <video> poster.
+  const src = tile.mediaType === "video" ? tile.thumbnailUrl : (tile.thumbnailUrl ?? tile.mediaUrl);
   return (
     <Link
       href={`/post/${tile.id}`}

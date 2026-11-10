@@ -1,5 +1,5 @@
 import { api, ApiError } from "@/lib/api";
-import type { UploadKind, UploadSignature, UploadedAsset } from "@/types/upload";
+import type { UploadKind, UploadSignature, ProcessedImage, UploadedAsset } from "@/types/upload";
 
 export function fileToDataUrl(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -10,13 +10,15 @@ export function fileToDataUrl(file: Blob): Promise<string> {
   });
 }
 
-const MAX_IMAGE_DIMENSION = 1024;
-const JPEG_QUALITY = 0.8;
+// Trim very large camera photos before upload (bandwidth); the server still resizes to its final
+// feed/thumbnail/avatar sizes and strips EXIF. Generous bound so the server's 1080px output isn't
+// upscaled from a smaller client crop.
+const MAX_IMAGE_DIMENSION = 1920;
+const JPEG_QUALITY = 0.82;
 
 /**
- * Downscale a phone photo to a web-friendly JPEG (longest edge ≤ 1024px) before upload, so large
- * camera images fit the uploader (and, in mock mode, the inline data-URL size budget). Returns the
- * original file untouched for non-images, GIFs, in non-browser contexts, or if anything goes wrong.
+ * Downscale a phone photo to a web-friendly JPEG before upload. Returns the original file untouched
+ * for non-images, GIFs, in non-browser contexts, or if anything goes wrong.
  */
 export async function compressImage(file: File | Blob): Promise<File | Blob> {
   if (typeof document === "undefined" || typeof createImageBitmap === "undefined") return file;
@@ -48,58 +50,59 @@ export async function compressImage(file: File | Blob): Promise<File | Blob> {
   }
 }
 
+/** PUT raw bytes to a presigned storage URL, reporting coarse progress via XHR. */
+function putToStorage(url: string, body: Blob, contentType: string, onProgress?: (f: number) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    xhr.setRequestHeader("Content-Type", contentType);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.(0.15 + 0.7 * (e.loaded / e.total));
+    };
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new ApiError(xhr.status, `Upload failed (${xhr.status})`, xhr.responseText)));
+    xhr.onerror = () => reject(new ApiError(0, "Upload failed (network error)"));
+    xhr.send(body);
+  });
+}
+
 /**
- * Upload a file. Asks the API for signed Cloudinary params; in mock mode (no Cloudinary keys)
- * it sends a data URL to the API's /api/upload/mock instead. Returns the hosted URL.
+ * Upload a file. Asks the API for a presigned PUT and uploads directly to object storage (so the
+ * 4.5 MB serverless body limit never applies); photos are then processed into sized WebP variants,
+ * videos return the original and are transcoded server-side. In mock mode (no storage configured)
+ * it falls back to sending a data URL to /api/upload/mock.
  */
 export async function uploadFile(
   file: File | Blob,
-  opts: { kind?: UploadKind; folder?: string; onProgress?: (fraction: number) => void } = {},
+  opts: { kind?: UploadKind; folder?: string; variant?: "feed" | "avatar"; onProgress?: (fraction: number) => void } = {},
 ): Promise<UploadedAsset> {
   const kind: UploadKind = opts.kind ?? (file.type.startsWith("video/") ? "video" : "image");
   const payload = kind === "image" ? await compressImage(file) : file;
-  const sig = await api<UploadSignature>("/api/upload", { method: "POST", json: { kind, folder: opts.folder } });
-  opts.onProgress?.(0.15);
+  const contentType = payload.type || (kind === "video" ? "video/mp4" : "image/jpeg");
+
+  const sig = await api<UploadSignature>("/api/upload", { method: "POST", json: { kind, contentType, size: payload.size } });
+  opts.onProgress?.(0.1);
+
   if (sig.mock || sig.isMock) {
     const dataUrl = await fileToDataUrl(payload);
     opts.onProgress?.(0.5);
-    const out = await api<UploadedAsset>("/api/upload/mock", { method: "POST", json: { dataUrl } });
+    const out = await api<{ url: string; secureUrl: string; thumbnailUrl?: string | null }>("/api/upload/mock", { method: "POST", json: { dataUrl } });
     opts.onProgress?.(1);
-    return out;
+    return { url: out.url, secureUrl: out.secureUrl, thumbnailUrl: out.thumbnailUrl ?? null, resourceType: kind, mock: true };
   }
-  const form = new FormData();
-  form.append("file", payload);
-  form.append("api_key", sig.apiKey);
-  form.append("timestamp", String(sig.timestamp));
-  form.append("signature", sig.signature);
-  form.append("folder", sig.folder);
-  const res = await fetch(sig.uploadUrl, { method: "POST", body: form });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new ApiError(res.status, `Upload failed (${res.status})`, text);
+
+  await putToStorage(sig.uploadUrl, payload, sig.contentType ?? contentType, opts.onProgress);
+  opts.onProgress?.(0.9);
+
+  if (kind === "image") {
+    const res = await api<ProcessedImage>("/api/upload/complete", { method: "POST", json: { key: sig.key, variant: opts.variant ?? "feed" } });
+    opts.onProgress?.(1);
+    return { url: res.url, secureUrl: res.url, thumbnailUrl: res.thumbnailUrl, width: res.width, height: res.height, resourceType: "image", mock: false };
   }
-  const data = (await res.json()) as {
-    public_id: string;
-    url: string;
-    secure_url: string;
-    resource_type: UploadKind;
-    width?: number;
-    height?: number;
-    duration?: number;
-    format?: string;
-  };
+
+  // Video: no synchronous processing step — the post stores the original + key and the server
+  // transcodes it in the background. The original plays in the feed until that completes.
   opts.onProgress?.(1);
-  return {
-    publicId: data.public_id,
-    url: data.url,
-    secureUrl: data.secure_url,
-    resourceType: data.resource_type,
-    width: data.width,
-    height: data.height,
-    duration: data.duration,
-    format: data.format,
-    mock: false,
-  };
+  return { url: sig.publicUrl!, secureUrl: sig.publicUrl!, thumbnailUrl: null, mediaKey: sig.key ?? null, resourceType: "video", mock: false };
 }
 
 export const uploadService = { uploadFile, fileToDataUrl, compressImage };

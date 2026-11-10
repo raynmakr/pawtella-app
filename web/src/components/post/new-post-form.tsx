@@ -84,6 +84,10 @@ function NewPostInner() {
       setError("Add a photo or video to post");
       return;
     }
+    if (media.kind === "video" && media.duration && media.duration > 60) {
+      setError("Videos can be up to 60 seconds long. Please trim it and try again.");
+      return;
+    }
     setError(null);
     setSubmitting(true);
     const hadFirstPost = user?.bonuses.firstPost ?? true;
@@ -94,6 +98,8 @@ function NewPostInner() {
       const res = await postsService.create({
         mediaUrl: asset.secureUrl || asset.url,
         mediaType: media.kind,
+        thumbnailUrl: asset.thumbnailUrl ?? null,
+        mediaKey: asset.mediaKey ?? null,
         petId: effectivePetId ? Number(effectivePetId) : null,
         caption: caption.trim() || null,
         featureConsent: effectiveConsent,
@@ -124,7 +130,7 @@ function NewPostInner() {
     <form onSubmit={submit} className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
       <PageHeader eyebrow="Create" title="New post" description="Share a photo or video of your pet with the Pawtella community." />
 
-      <MediaPicker value={media} onChange={(m) => { setMedia(m); setSuggestions([]); setError(null); }} progress={progress} disabled={submitting} onError={(m) => toast.error(m)} />
+      <MediaPicker value={media} onChange={(m) => { setMedia(m); setSuggestions([]); setError(null); }} progress={progress} disabled={submitting} maxBytes={100 * 1024 * 1024} onError={(m) => toast.error(m)} />
 
       <section className="rounded-card bg-card p-4 shadow-soft ring-1 ring-border sm:p-5">
         <div className="grid gap-5">

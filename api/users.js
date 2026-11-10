@@ -131,7 +131,7 @@ async function userPosts(req, handle) {
     where += ` AND p.id < $${params.length}`;
   }
   const rows = await many(
-    `SELECT p.id, p.user_id, p.pet_id, p.challenge_id, p.caption, p.media_url, p.media_type, p.thumbnail_url,
+    `SELECT p.id, p.user_id, p.pet_id, p.challenge_id, p.caption, p.media_url, p.media_type, p.thumbnail_url, p.media_status,
             p.width, p.height, p.duration_seconds, p.like_count, p.comment_count, p.share_count, p.created_at,
             pet.name AS pet_name, pet.species AS pet_species
        FROM posts p LEFT JOIN pets pet ON pet.id = p.pet_id

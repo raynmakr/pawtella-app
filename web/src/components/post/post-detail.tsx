@@ -83,6 +83,7 @@ export function PostDetail({ id }: { id: string }) {
           clampAspect={false}
           priority
           onDoubleLike={() => !post.likedByViewer && toggle.mutate(post)}
+          processing={post.mediaType === "video" && post.mediaStatus === "processing"}
         />
         <div className="flex items-center gap-1 px-2 pt-2">
           <LikeButton post={post} />

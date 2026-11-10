@@ -27,6 +27,8 @@ export interface Post {
   mediaUrl: string;
   mediaType: MediaType;
   thumbnailUrl: string | null;
+  /** 'processing' while a user-uploaded video is being transcoded; the original plays meanwhile. */
+  mediaStatus: "ready" | "processing" | "failed";
   width: number | null;
   height: number | null;
   durationSeconds: number | null;
@@ -75,6 +77,8 @@ export interface CreatePostInput {
   mediaUrl: string;
   mediaType: MediaType;
   thumbnailUrl?: string | null;
+  /** Videos only: the original object key so the server can transcode it asynchronously. */
+  mediaKey?: string | null;
   petId?: number | null;
   generationId?: number | null;
   challengeId?: number | null;
@@ -106,6 +110,7 @@ export interface UserPost {
   mediaUrl: string;
   mediaType: MediaType;
   thumbnailUrl: string | null;
+  mediaStatus: "ready" | "processing" | "failed";
   width: number | null;
   height: number | null;
   durationSeconds: number | null;

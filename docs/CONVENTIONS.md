@@ -111,13 +111,18 @@ will replace it. Never overwrite a file owned by someone else.
 - `attributeSignup(newUserId, { code?, source? }, tx) → Promise<void>` (creates referrals row or partner attribution; awards signup bonuses via lib/points.js)
 - `onReferredConversion(userId, kind: 'creation'|'order', tx?) → Promise<void>` (pays referrer once)
 
-### lib/media.js (Backend A) — Cloudinary wrapper, mock when no keys
-- `isMock`
-- `signUpload({ folder, resourceType }) → { cloudName, apiKey, timestamp, signature, folder, uploadUrl }`
-- `uploadFromUrl(url, { folder, resourceType: 'image'|'video', publicId? }) → { publicId, url, secureUrl, width, height, duration?, format }`
-- `watermarkedUrl({ publicId, resourceType, handle }) → string` (logo overlay + "@handle" text)
-- `thumbnailUrl({ publicId, resourceType }) → string`
-- `deleteAsset(publicId, resourceType)`
+### lib/media.js — Neon Object Storage (S3-compatible) + processing, mock when no keys
+Uploads go direct to storage via presigned PUT; photos are processed into sized WebP variants
+(1080 feed / 480 thumb / 256 avatar) with sharp (auto-rotate, EXIF/GPS stripped); videos are
+transcoded to H.264/AAC MP4 (faststart, ≤720p, ~2 Mbps) + a poster frame with the bundled ffmpeg.
+Mock mode (no `MEDIA_S3_*` keys) echoes a data URL and touches nothing. See also `lib/storage.js`
+(S3 client/presign/get/put/delete), `lib/images.js` (sharp), `lib/video.js` (ffmpeg).
+- `isMock`, `MOCK_UPLOAD_MAX_BYTES`, `IMAGE_MAX_BYTES` (15 MB), `VIDEO_MAX_BYTES` (100 MB), `VIDEO_MAX_SECONDS` (60)
+- `presignUpload({ kind, contentType, size }) → { mock, kind, uploadUrl, key?, publicUrl?, contentType?, maxBytes }`
+- `completeImageUpload({ key, variant: 'feed'|'avatar' }) → { url, thumbnailUrl, width, height }` (real mode)
+- `processVideoKey(key) → { url, thumbnailUrl, width, height, duration }` (used by the process-media cron)
+- `storeFromUrl(url, { kind }) → { url, thumbnailUrl, width, height, duration? }` (copies+processes a provider URL)
+- `validateUpload({ kind, contentType, size })`, `deleteAsset(urlOrKey)`
 
 ### lib/points-rules.js and lib/points.js (Backend B)
 - `RULES` (values, prices, bonuses, caps) exported from points-rules; helpers `pointsToCents(p)`, `centsToPoints(c)`, `generationCost({ kind, duration, hd })`, `maxRedeemablePoints(subtotalCents, balance)`
@@ -179,7 +184,7 @@ will replace it. Never overwrite a file owned by someone else.
 - `enqueueAdmin({ journey, title, body, payload })` (userId NULL → admin digest picks it up)
 
 ### lib/posts.js (Backend D)
-- `createPost(userId, { petId?, generationId?, challengeId?, caption?, mediaUrl, mediaType, thumbnailUrl?, featureConsent? }, tx?) → post` (awards first-post bonus, tracks, referral conversion)
+- `createPost(userId, { petId?, generationId?, challengeId?, caption?, mediaUrl, mediaType, thumbnailUrl?, featureConsent?, mediaStatus?, mediaKey? }, tx?) → post` (awards first-post bonus, tracks, referral conversion; `mediaStatus: 'processing'` + `mediaKey` queue a video for the process-media cron)
 - `getPostForLanding(id) → { post, user, pet } | null`
 
 ### lib/subscriptions/* (Subscribe & Save) — flag-gated by `flags.subscriptionsEnabled`; see docs/SUBSCRIPTIONS.md
@@ -202,7 +207,7 @@ Auth (`api/auth.js`, family `/api/auth/*`, all JSON):
 
 Users/pets (`api/users.js`, `api/pets.js`): `GET/PATCH /api/users/me`, `POST /api/users/me/push-token`, `GET /api/users/:handle` (public profile + counts + isFollowing), `GET /api/users/:handle/posts`; `GET/POST /api/pets`, `GET/PATCH/DELETE /api/pets/:id`.
 
-Upload (`api/upload.js`): `POST /api/upload { kind: 'image'|'video', folder? }` → signed Cloudinary params (or mock `{ mock: true, uploadUrl: '/api/upload/mock' }`); `POST /api/upload/mock` accepts a base64 data URL in dev.
+Upload (`api/upload.js`): `POST /api/upload { kind: 'image'|'video', contentType, size? }` → presigned PUT descriptor `{ mock, kind, uploadUrl, key?, publicUrl?, contentType?, maxBytes }` (mock → `{ mock: true, uploadUrl: '/api/upload/mock' }`). Client PUTs bytes direct to storage, then `POST /api/upload/complete { key, variant? }` → `{ url, thumbnailUrl, width, height }` to process a photo (404 in mock). Videos skip `/complete`: the client posts the original + `mediaKey` and the process-media cron transcodes it. `POST /api/upload/mock` accepts a base64 data URL in dev/mock mode.
 
 Points (`api/points.js`): `GET /api/points` → `{ balance, lifetimeEarned, held, rules: { valueCents, minRedeem, maxRedeemPercent, prices }, ways: [...] }`, `GET /api/points/transactions?page`, `POST /api/points/hold { cartId, points }` → `{ hold, cart }`, `DELETE /api/points/hold/:id`, `GET /api/points/packs`.
 

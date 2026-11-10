@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "placedog.net" },
       { protocol: "https", hostname: "loremflickr.com" },
       { protocol: "https", hostname: "cataas.com" },
-      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "**.aws.neon.tech" }, // Neon Object Storage (media)
       { protocol: "https", hostname: "cdn.shopify.com" },
     ],
   },
