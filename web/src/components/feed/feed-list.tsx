@@ -3,6 +3,7 @@
 import { ListSkeleton } from "@/components/list-skeleton";
 import { ErrorState } from "@/components/error-state";
 import { LoadMore } from "@/components/load-more";
+import { Reveal } from "@/components/motion";
 import { useFeed } from "@/hooks/use-posts";
 import type { FeedMode } from "@/types/post";
 import { PostCard } from "./post-card";
@@ -22,7 +23,9 @@ export function FeedList({ mode, challengeId, empty }: FeedListProps) {
   return (
     <div className="flex flex-col gap-5">
       {posts.map((post, i) => (
-        <PostCard key={post.id} post={post} priority={i === 0} />
+        <Reveal key={post.id} delay={Math.min(i, 6) * 0.05} y={14}>
+          <PostCard post={post} priority={i === 0} />
+        </Reveal>
       ))}
       <LoadMore
         hasMore={!!q.hasNextPage}

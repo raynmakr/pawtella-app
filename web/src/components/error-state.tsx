@@ -1,7 +1,8 @@
 "use client";
 
-import { AlertTriangleIcon, RotateCcwIcon } from "lucide-react";
+import { RotateCcwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Mascot } from "@/components/mascot";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/lib/api";
 
@@ -21,9 +22,7 @@ export function ErrorState({ title = "Something went wrong", error, description,
       className={cn("flex flex-col items-center justify-center rounded-card border border-destructive/20 bg-destructive/5 px-6 py-12 text-center", className)}
       {...props}
     >
-      <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
-        <AlertTriangleIcon className="size-7" />
-      </div>
+      <Mascot pose="sad" className="mb-1 w-24" />
       <h3 className="text-lg">{title}</h3>
       <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">{detail}</p>
       {onRetry && (

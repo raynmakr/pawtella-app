@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { ListSkeleton } from "@/components/list-skeleton";
+import { Reveal } from "@/components/motion";
 import { useCollections, useProducts } from "@/hooks/use-shop";
 import { shopService } from "@/services/shop";
 import { useSession } from "@/stores/session";
@@ -243,8 +244,10 @@ export function ShopScreen() {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {items.map((p) => (
-              <ProductCard key={p.id} product={p} />
+            {items.map((p, i) => (
+              <Reveal key={p.id} delay={Math.min(i, 8) * 0.04} className="h-full">
+                <ProductCard product={p} className="h-full" />
+              </Reveal>
             ))}
           </div>
           {products.hasNextPage && (

@@ -3,7 +3,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { HeartPulseIcon, ShoppingBagIcon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Logo, PawIcon } from "@/components/logo";
+import { Logo } from "@/components/logo";
+import { Mascot } from "@/components/mascot";
 import { GoogleButton } from "@/components/auth/google-button";
 import { ReferralCapture } from "@/components/auth/referral-capture";
 
@@ -31,10 +32,8 @@ export default function WelcomePage() {
       <div className="mx-auto flex w-full max-w-[1100px] flex-1 flex-col px-5 py-6 sm:px-8 lg:flex-row lg:items-center lg:gap-16 lg:py-16">
         {/* Hero */}
         <section className="flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">
-          <Logo size="lg" className="mb-10 lg:mb-14" />
-          <div className="relative mb-6 flex size-28 items-center justify-center rounded-[2.25rem] bg-primary text-primary-foreground shadow-lift lg:hidden">
-            <PawIcon className="size-14 -rotate-12" />
-          </div>
+          <Logo size="lg" className="mb-8 lg:mb-12" />
+          <Mascot pose="wave" float className="mb-4 w-28 sm:w-32" title="Pip, the Pawtella mascot, waving hello" />
           <h1 className="max-w-xl text-balance text-4xl leading-[1.05] sm:text-5xl lg:text-6xl">
             Your pet&apos;s <span className="text-primary">favourite</span> app
           </h1>

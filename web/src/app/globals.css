@@ -239,13 +239,21 @@
    ------------------------------------------------------------------------------------------ */
 @keyframes rise-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes page-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .animate-rise-in { animation: rise-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-fade-in { animation: fade-in 0.4s ease-out both; }
+/* Page-enter: fast, subtle, runs once per navigation (template.tsx remounts). */
+.animate-page-in { animation: page-in 0.34s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Badge / count pop — keyed to re-run when a value changes. */
+@keyframes pop { 0% { transform: scale(1); } 35% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.animate-pop { animation: pop 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
 
 @media (prefers-reduced-motion: reduce) {
   .pip-eyes, .pip-ear, .pip-tail, .pip-wave, .pip-cheer, .pip-float,
-  .pip-dots > *, .pip-sparkle > *, .animate-pop-in, .animate-rise-in, .animate-fade-in, .confetti-piece {
+  .pip-dots > *, .pip-sparkle > *, .animate-pop-in, .animate-rise-in, .animate-fade-in,
+  .animate-page-in, .animate-pop, .confetti-piece {
     animation: none !important;
   }
-  .animate-rise-in, .animate-fade-in { opacity: 1 !important; transform: none !important; }
+  .animate-rise-in, .animate-fade-in, .animate-page-in { opacity: 1 !important; transform: none !important; }
 }

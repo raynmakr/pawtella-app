@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { CameraIcon, CatIcon, DogIcon, Loader2Icon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Logo, PawIcon } from "@/components/logo";
+import { Logo } from "@/components/logo";
+import { Mascot } from "@/components/mascot";
 import { FormField } from "@/components/auth/form-field";
 import { petsService } from "@/services/pets";
 import { uploadFile } from "@/services/upload";
@@ -101,10 +102,8 @@ export function AddPetFlow() {
     return (
       <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6 py-12 text-center">
         <Confetti />
-        <div className="animate-pop-in flex size-32 items-center justify-center rounded-[2.5rem] bg-points text-points-foreground shadow-[0_20px_50px_-20px_var(--points)]">
-          <PawIcon className="size-16" />
-        </div>
-        <p className="mt-8 text-sm font-semibold tracking-wider text-primary uppercase">Welcome, {done.name}!</p>
+        <Mascot pose="celebrating" className="animate-pop-in w-40" title="Pip celebrating" />
+        <p className="mt-6 text-sm font-semibold tracking-wider text-primary uppercase">Welcome, {done.name}!</p>
         <h1 className="mt-2 text-balance text-4xl sm:text-5xl">
           You&apos;ve got <span className="text-points-foreground dark:text-points">{formatPoints(done.points)} Paw Points</span>
         </h1>

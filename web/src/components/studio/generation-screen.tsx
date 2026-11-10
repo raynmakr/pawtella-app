@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/page-header";
 import { ErrorState } from "@/components/error-state";
 import { PawIcon } from "@/components/logo";
+import { Mascot } from "@/components/mascot";
 import { useGeneration } from "@/hooks/use-generation";
 import { aiService } from "@/services/ai";
 import { challengesService } from "@/services/challenges";
@@ -145,16 +146,9 @@ export function GenerationScreen({ id }: { id: string }) {
               )}
               <div className="relative">
                 {gen.status === "failed" ? (
-                  <div className="flex size-20 items-center justify-center rounded-3xl bg-destructive/10 text-destructive">
-                    <RotateCcwIcon className="size-9" />
-                  </div>
+                  <Mascot pose="sad" className="w-24" />
                 ) : (
-                  <div className="relative flex size-24 items-center justify-center">
-                    <span className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
-                    <span className="relative flex size-20 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lift">
-                      <SparklesIcon className="size-9 animate-pulse" />
-                    </span>
-                  </div>
+                  <Mascot pose="thinking" float className="w-28" title="Pip is making your creation" />
                 )}
                 {inFlight && (
                   <>
