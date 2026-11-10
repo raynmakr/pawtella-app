@@ -19,6 +19,10 @@ export interface PrivateUser extends PublicUser {
   postalCode: string | null;
   marketingOptIn: boolean;
   featureConsentDefault: boolean;
+  termsVersion: string | null;
+  termsAcceptedAt: string | null;
+  privacyVersion: string | null;
+  needsTermsAcceptance: boolean;
   hasPassword: boolean;
   hasApple: boolean;
   hasGoogle: boolean;

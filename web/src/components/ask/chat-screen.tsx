@@ -8,8 +8,11 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/error-state";
 import { PetChips } from "@/components/pet-chips";
+import { toast } from "sonner";
 import { useSession } from "@/stores/session";
 import { useConversation, useSendMessage } from "@/hooks/use-chat";
+import { useAiMemory, useAiMemoryMutations } from "@/hooks/use-ai-memory";
+import { errorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { ChatLocation } from "@/types/ai";
 import { Composer } from "./composer";
@@ -38,7 +41,12 @@ export function ChatScreen() {
   const [location, setLocation] = useState<ChatLocation | null>(null);
   const [text, setText] = useState("");
   const [listOpen, setListOpen] = useState(false);
+  const [consentDismissed, setConsentDismissed] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const memory = useAiMemory();
+  const { setHealthConsent } = useAiMemoryMutations();
+  const showHealthConsent = Boolean(memory.data?.enabled) && memory.data?.healthConsent === false && !consentDismissed;
 
   const conv = useConversation(conversationId);
   const { send, retry, dismiss, pending } = useSendMessage((id) => {
@@ -142,6 +150,30 @@ export function ChatScreen() {
         </div>
 
         <div className="pt-3">
+          {showHealthConsent && (
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-card border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+              <span className="min-w-0 flex-1 text-foreground/90">
+                Let Pawtella remember {pet?.name ?? "your pet"}&apos;s health details (allergies, conditions, meds) to personalize answers? You can change this anytime in Settings.
+              </span>
+              <span className="flex shrink-0 gap-1.5">
+                <Button
+                  size="sm"
+                  disabled={setHealthConsent.isPending}
+                  onClick={() =>
+                    setHealthConsent.mutate(true, {
+                      onSuccess: () => toast.success("Health memory on"),
+                      onError: (err) => toast.error(errorMessage(err)),
+                    })
+                  }
+                >
+                  Enable
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setConsentDismissed(true)}>
+                  Not now
+                </Button>
+              </span>
+            </div>
+          )}
           <Composer
             disabled={pending?.status === "sending"}
             onSend={handleSend}
@@ -151,8 +183,8 @@ export function ChatScreen() {
             onTextChange={setText}
             placeholder={pet ? `Ask about ${pet.name}…` : "Ask anything about pets…"}
           />
-          <p className="mt-1.5 px-2 text-center text-[11px] text-muted-foreground">
-            Not a vet. In an emergency, call a clinic right away.
+          <p className="mt-1.5 px-2 text-center text-[11px] leading-relaxed text-muted-foreground">
+            Pawtella AI shares general info, not veterinary advice. In an emergency, contact a vet right away.
           </p>
         </div>
       </section>

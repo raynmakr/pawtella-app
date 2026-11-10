@@ -235,6 +235,17 @@ export function CartScreen() {
                 Checkout <ArrowRightIcon data-icon="inline-end" />
               </Button>
               <p className="mt-2 text-center text-xs text-muted-foreground">Secure checkout by Shopify. Pickup, delivery or shipping is chosen there.</p>
+              <p className="mt-2 text-center text-xs leading-relaxed text-muted-foreground">
+                By placing your order you agree to our{" "}
+                <Link href="/terms" className="underline underline-offset-2 hover:text-primary">
+                  Terms of Use
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="underline underline-offset-2 hover:text-primary">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
             </section>
 
             {hasPhysical && <FulfillmentOptions footnote="You pick pickup, local delivery or shipping at checkout." />}

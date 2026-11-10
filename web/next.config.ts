@@ -7,6 +7,12 @@ const API_URL = (process.env.API_URL ?? "http://localhost:3000").replace(/\/$/, 
 const nextConfig: NextConfig = {
   // Authenticated pages are dynamic; keep the simpler rendering model for now.
   cacheComponents: false,
+  // The /terms and /privacy pages read their markdown from content/legal at runtime; make sure the
+  // files are traced into those serverless functions.
+  outputFileTracingIncludes: {
+    "/terms": ["./content/legal/**"],
+    "/privacy": ["./content/legal/**"],
+  },
   devIndicators: { position: "bottom-right" },
   turbopack: {
     // Two lockfiles exist (repo root + web/); pin the root so Turbopack doesn't guess.

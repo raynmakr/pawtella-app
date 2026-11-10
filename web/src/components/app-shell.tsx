@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { Footer } from "@/components/footer";
+import { TermsAcceptanceBanner } from "@/components/legal/terms-acceptance-banner";
 import {
   BellIcon,
   HouseIcon,
@@ -353,7 +355,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar onCreate={() => setCreateOpen(true)} />
       <MobileTopBar />
       <main className="pb-24 md:pb-10 md:pl-64">
+        <TermsAcceptanceBanner />
         <div className="mx-auto w-full max-w-[1100px] px-4 pt-5 sm:px-6 md:pt-10">{children}</div>
+        <Footer className="mt-10 bg-transparent" />
       </main>
       <MobileTabBar onCreate={() => setCreateOpen(true)} />
       <CreateDrawer open={createOpen} onOpenChange={setCreateOpen} />

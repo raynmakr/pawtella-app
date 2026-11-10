@@ -26,6 +26,10 @@ export interface RegisterInput {
   handle?: string;
   referralCode?: string;
   partnerCode?: string;
+  /** Required: the user ticked the Terms of Use + Privacy Policy agreement. */
+  termsAccepted: boolean;
+  /** Optional CASL marketing-email consent. */
+  marketingOptIn?: boolean;
 }
 
 export interface GoogleAuthInput {

@@ -12,6 +12,8 @@ export interface MemoryFact {
 
 export interface AiMemory {
   enabled: boolean;
+  healthConsent: boolean;
+  healthConsentAt: string | null;
   healthSummary: string | null;
   updatedAt: string | null;
   facts: MemoryFact[];

@@ -14,6 +14,7 @@ export function useAiMemoryMutations() {
   const onData = (data: AiMemory) => qc.setQueryData(queryKeys.ai.memory, data);
 
   const setEnabled = useMutation({ mutationFn: aiMemoryService.setEnabled, onSuccess: onData });
+  const setHealthConsent = useMutation({ mutationFn: aiMemoryService.setHealthConsent, onSuccess: onData });
   const setHealthSummary = useMutation({ mutationFn: aiMemoryService.setHealthSummary, onSuccess: onData });
   const updateFact = useMutation({
     mutationFn: ({ id, value }: { id: number; value: string }) => aiMemoryService.updateFact(id, value),
@@ -22,5 +23,5 @@ export function useAiMemoryMutations() {
   const deleteFact = useMutation({ mutationFn: (id: number) => aiMemoryService.deleteFact(id), onSuccess: onData });
   const clearAll = useMutation({ mutationFn: aiMemoryService.clearAll, onSuccess: onData });
 
-  return { setEnabled, setHealthSummary, updateFact, deleteFact, clearAll };
+  return { setEnabled, setHealthConsent, setHealthSummary, updateFact, deleteFact, clearAll };
 }

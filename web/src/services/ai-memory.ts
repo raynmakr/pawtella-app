@@ -4,6 +4,7 @@ import type { AiMemory } from "@/types/ai-memory";
 export const aiMemoryService = {
   get: () => api<AiMemory>("/api/ai/memory"),
   setEnabled: (enabled: boolean) => api<AiMemory>("/api/ai/memory", { method: "PATCH", json: { enabled } }),
+  setHealthConsent: (healthConsent: boolean) => api<AiMemory>("/api/ai/memory", { method: "PATCH", json: { healthConsent } }),
   setHealthSummary: (healthSummary: string | null) =>
     api<AiMemory>("/api/ai/memory", { method: "PATCH", json: { healthSummary } }),
   updateFact: (id: number, value: string) =>

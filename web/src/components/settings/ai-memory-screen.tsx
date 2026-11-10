@@ -86,7 +86,7 @@ function FactRow({ fact, label, onSave, onDelete, busy }: { fact: MemoryFact; la
 export function AiMemoryScreen() {
   const { pets } = useSession();
   const q = useAiMemory();
-  const { setEnabled, setHealthSummary, updateFact, deleteFact, clearAll } = useAiMemoryMutations();
+  const { setEnabled, setHealthConsent, setHealthSummary, updateFact, deleteFact, clearAll } = useAiMemoryMutations();
   const [confirmClear, setConfirmClear] = useState(false);
   const [summaryDraft, setSummaryDraft] = useState<string | null>(null);
 
@@ -115,6 +115,7 @@ export function AiMemoryScreen() {
 
   const busy = updateFact.isPending || deleteFact.isPending || clearAll.isPending;
   const enabled = q.data?.enabled ?? true;
+  const healthConsent = q.data?.healthConsent ?? false;
 
   return (
     <>
@@ -147,7 +148,32 @@ export function AiMemoryScreen() {
             </label>
           </Section>
 
+          <Section title="Pet health information" description="Allergies, conditions, medications and vet notes your pets.">
+            <label className="flex cursor-pointer items-center justify-between gap-4">
+              <span>
+                <span className="block text-[15px] font-semibold">Remember my pets&apos; health details</span>
+                <span className="block text-sm text-muted-foreground">
+                  Express consent for Pawtella AI to store pet health information (allergies, conditions, medications, vet notes) so answers are more relevant. You can use the assistant without this. Turning it off deletes the health details already stored.
+                </span>
+              </span>
+              <Switch
+                checked={healthConsent}
+                disabled={setHealthConsent.isPending || !enabled}
+                onCheckedChange={(v) => {
+                  setHealthConsent.mutate(Boolean(v), {
+                    onSuccess: () => toast.success(v ? "Health memory on" : "Health memory off — stored health details removed"),
+                    onError: (err) => toast.error(errorMessage(err)),
+                  });
+                }}
+              />
+            </label>
+          </Section>
+
           <Section title="Health history" description="A short summary of health questions you've asked and what was suggested.">
+            {!healthConsent ? (
+              <p className="text-sm text-muted-foreground">Turn on health memory above to let Pawtella keep a short health summary.</p>
+            ) : (
+              <>
             <Textarea
               rows={3}
               placeholder="Nothing saved yet."
@@ -177,6 +203,8 @@ export function AiMemoryScreen() {
                 Save summary
               </Button>
             </div>
+              </>
+            )}
           </Section>
 
           {CATEGORY_ORDER.filter((c) => (grouped.get(c)?.length ?? 0) > 0).map((category) => (

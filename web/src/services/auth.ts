@@ -11,6 +11,8 @@ export const authService = {
   forgot: (email: string) => api<{ ok: true }>("/api/auth/forgot", { method: "POST", json: { email } }),
   reset: (token: string, password: string) =>
     api<AuthResponse>("/api/auth/reset", { method: "POST", json: { token, password } }),
+  /** Record acceptance of the current Terms + Privacy versions (re-acceptance prompt). */
+  acceptTerms: () => api<AuthResponse>("/api/auth/accept-terms", { method: "POST" }),
   /** Handled entirely by the BFF: clears the cookie. */
   logout: () => api<{ ok: true }>("/api/auth/logout", { method: "POST" }),
   deleteAccount: () => api<{ ok: true }>("/api/auth/account", { method: "DELETE" }),

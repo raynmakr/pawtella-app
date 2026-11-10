@@ -20,6 +20,8 @@ const schema = z.object({
   email: z.email("Enter a valid email"),
   password: z.string().min(8, "Use at least 8 characters"),
   referralCode: z.string().trim().max(32).optional(),
+  termsAccepted: z.boolean().refine((v) => v === true, { message: "Please agree to the Terms of Use and Privacy Policy to continue." }),
+  marketingOptIn: z.boolean().optional(),
 });
 type Values = z.infer<typeof schema>;
 
@@ -28,7 +30,7 @@ export function RegisterForm() {
   const { hydrate } = useSession();
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { displayName: "", email: "", password: "", referralCode: "" },
+    defaultValues: { displayName: "", email: "", password: "", referralCode: "", termsAccepted: false, marketingOptIn: false },
   });
   const { errors, isSubmitting } = form.formState;
 
@@ -44,6 +46,8 @@ export function RegisterForm() {
         password: values.password,
         displayName: values.displayName,
         referralCode: values.referralCode ? values.referralCode.toUpperCase() : undefined,
+        termsAccepted: values.termsAccepted,
+        marketingOptIn: values.marketingOptIn ?? false,
       });
       clearReferralCode();
       hydrate({ user: res.user, pets: [] });
@@ -69,6 +73,36 @@ export function RegisterForm() {
       <FormField label="Referral or partner code" htmlFor="referralCode" error={errors.referralCode?.message} description="Optional. Both of you earn bonus Paw Points.">
         <Input id="referralCode" autoComplete="off" placeholder="PAW-1234" className="uppercase placeholder:normal-case" {...form.register("referralCode")} />
       </FormField>
+      <div className="flex flex-col gap-3">
+        <label className="flex items-start gap-3 text-sm leading-relaxed">
+          <input
+            type="checkbox"
+            className="mt-0.5 size-4 shrink-0 accent-primary"
+            aria-invalid={!!errors.termsAccepted}
+            {...form.register("termsAccepted")}
+          />
+          <span>
+            I am at least 18 (or the age of majority where I live) and I agree to the{" "}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline underline-offset-2">
+              Terms of Use
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline underline-offset-2">
+              Privacy Policy
+            </a>
+            .
+          </span>
+        </label>
+        {errors.termsAccepted?.message && (
+          <p role="alert" className="text-sm font-medium text-destructive">
+            {errors.termsAccepted.message}
+          </p>
+        )}
+        <label className="flex items-start gap-3 text-sm leading-relaxed text-muted-foreground">
+          <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" {...form.register("marketingOptIn")} />
+          <span>Email me Pawtella news, product tips and Paw Points offers. You can unsubscribe anytime. (Optional)</span>
+        </label>
+      </div>
       {errors.root?.message && (
         <p role="alert" className="rounded-xl bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
           {errors.root.message}
