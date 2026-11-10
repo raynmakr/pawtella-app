@@ -290,12 +290,30 @@ export function SettingsScreen() {
           <Section title="Legal">
             <div className="flex flex-col gap-3">
               <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
-                <Link href="/terms" className="text-foreground/80 hover:text-primary hover:underline">
-                  Terms of Use
-                </Link>
-                <Link href="/privacy" className="text-foreground/80 hover:text-primary hover:underline">
-                  Privacy Policy
-                </Link>
+                <span className="inline-flex items-center gap-2">
+                  <Link href="/terms" className="text-foreground/80 hover:text-primary hover:underline">
+                    Terms of Use
+                  </Link>
+                  <Link
+                    href="/fr/terms"
+                    hrefLang="fr-CA"
+                    className="text-xs text-muted-foreground hover:text-primary hover:underline"
+                  >
+                    Français
+                  </Link>
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Link href="/privacy" className="text-foreground/80 hover:text-primary hover:underline">
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    href="/fr/privacy"
+                    hrefLang="fr-CA"
+                    className="text-xs text-muted-foreground hover:text-primary hover:underline"
+                  >
+                    Français
+                  </Link>
+                </span>
               </nav>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 © 2026 Bone &amp; Biscuit College West (operating as Pawtella) · Toronto, Canada

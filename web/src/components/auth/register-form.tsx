@@ -86,9 +86,15 @@ export function RegisterForm() {
             <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline underline-offset-2">
               Terms of Use
             </a>{" "}
+            <a href="/fr/terms" target="_blank" rel="noopener noreferrer" hrefLang="fr-CA" className="text-xs text-muted-foreground underline underline-offset-2">
+              (Français)
+            </a>{" "}
             and{" "}
             <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline underline-offset-2">
               Privacy Policy
+            </a>{" "}
+            <a href="/fr/privacy" target="_blank" rel="noopener noreferrer" hrefLang="fr-CA" className="text-xs text-muted-foreground underline underline-offset-2">
+              (Français)
             </a>
             .
           </span>

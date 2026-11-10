@@ -1,6 +1,6 @@
 # Pawtella Terms of Use
 
-**Effective Date:** [Effective Date] · **Version:** [Version 1.0]
+**Effective Date:** November 10, 2026 · **Version:** 1.0
 
 These Terms of Use (the **"Terms"**) are a legal agreement between you and **Bone & Biscuit College West**, a corporation incorporated under the laws of [jurisdiction of incorporation] (corporation no. [corporation number]), doing business as **Pawtella** (**"Pawtella," "we," "us"** or **"our"**). They govern your use of the Pawtella website at https://pawtella.com, our mobile and web apps, our online store, our Toronto Depot, our social feed, our AI features, the Paw Points program, Subscribe & Save, and any related services (together, the **"Services"**).
 
@@ -348,7 +348,7 @@ To the extent permitted by law, any claim arising out of or relating to these Te
 
 29.8 **Interpretation.** Headings and the "Key Points" summary are for convenience only and do not affect interpretation. "Including" means "including without limitation." Amounts are in Canadian dollars unless stated.
 
-29.9 **Language and Quebec.** These Terms are written in English. **For users in Quebec:** a French version of these Terms will be made available, and you have the right to receive it before you are bound. If you are a Quebec consumer, the parties' wish that the contract be drawn up in English applies only after the French version has been made available to you and you have expressly chosen English. *Pour les utilisateurs du Québec : une version française des présentes Conditions d'utilisation est mise à votre disposition. Vous pouvez en prendre connaissance avant d'être lié(e) par celles-ci. Si vous êtes un consommateur du Québec et que vous choisissez expressément de recevoir ces conditions en anglais après avoir eu accès à la version française, vous acceptez d'être lié(e) par la version anglaise.* If a French version exists and it conflicts with the English version, the version that the law requires to prevail will prevail.
+29.9 **Language, bilingual versions and Quebec.** These Terms, the Privacy Policy and all related documents are published in **English and French**. The French version is available at https://pawtella.com/fr/terms (Privacy Policy: https://pawtella.com/fr/privacy). **The English and French versions are equivalent and equally authoritative**, and each expresses the same agreement. **The parties have expressly required that these Terms and all documents related to them be drawn up in both the French and English languages.** For users and consumers in Quebec, the French version is made available to you before you are bound, so that you may take knowledge of it, and it governs to the extent the law requires. *Les parties ont expressément exigé que les présentes Conditions d'utilisation ainsi que tous les documents qui s'y rattachent soient rédigés en français et en anglais. Les versions française et anglaise sont équivalentes et font également foi. Pour les utilisateurs et consommateurs du Québec, la version française vous est remise avant que vous ne soyez lié(e), afin que vous puissiez en prendre connaissance, et elle prévaut dans la mesure où la loi l'exige.* Where the law requires one version to prevail, that version prevails.
 
 ## 30. Contact Us
 
@@ -358,4 +358,4 @@ Email: **hello@pawtella.com**
 Phone: [phone number]
 Website: https://pawtella.com
 
-*Last updated: [Effective Date] · [Version 1.0]*
+*Last updated: November 10, 2026 · Version 1.0*

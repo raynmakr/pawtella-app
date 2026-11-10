@@ -7,17 +7,23 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
+// English source docs plus their Canadian French (fr-CA) counterparts (<doc>.fr.md), bundled under
+// the key "<doc>.fr" so the French legal routes can render them without runtime fs access.
 const docs = ["terms", "privacy"];
+const keys = [...docs, ...docs.map((d) => `${d}.fr`)];
 
-const entries = docs
-  .map((doc) => {
-    const md = readFileSync(path.join(root, "content", "legal", `${doc}.md`), "utf8");
-    return `  ${doc}: ${JSON.stringify(md)},`;
+const entries = keys
+  .map((key) => {
+    const file = `${key}.md`;
+    const md = readFileSync(path.join(root, "content", "legal", file), "utf8");
+    return `  ${JSON.stringify(key)}: ${JSON.stringify(md)},`;
   })
   .join("\n");
 
+const unionType = keys.map((k) => JSON.stringify(k)).join(" | ");
+
 const out = `// AUTO-GENERATED from content/legal/*.md by scripts/gen-legal.mjs. Do not edit by hand.
-export const LEGAL_CONTENT: Record<"terms" | "privacy", string> = {
+export const LEGAL_CONTENT: Record<${unionType}, string> = {
 ${entries}
 };
 `;
