@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { HeartIcon, PlayIcon, VolumeXIcon, Volume2Icon } from "lucide-react";
 import { PawIcon } from "@/components/logo";
+import { useVideoPrefStore } from "@/stores/video-preferences";
 import { cn } from "@/lib/utils";
 import { isOptimizableImage, mediaAspect } from "@/lib/media";
 import type { MediaType } from "@/types/post";
@@ -89,25 +90,56 @@ export function PostMedia({ src, type, poster, alt = "", width, height, onDouble
 
 function AutoplayVideo({ src, poster }: { src: string; poster?: string | null }) {
   const ref = useRef<HTMLVideoElement>(null);
-  const [muted, setMuted] = useState(true);
+  const visible = useRef(false);
   const [playing, setPlaying] = useState(false);
+  // Session-wide sound preference, persisted to localStorage and shared across every feed video.
+  const muted = useVideoPrefStore((s) => s.muted);
+  const soundUnlocked = useVideoPrefStore((s) => s.soundUnlocked);
+  const hydrate = useVideoPrefStore((s) => s.hydrate);
+  const setMuted = useVideoPrefStore((s) => s.setMuted);
+
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
+  // Start (or restart) playback honoring the sound preference. If the browser blocks unmuted
+  // autoplay (no user gesture yet this session) we fall back to muted playback WITHOUT losing the
+  // preference — the next gesture flips `soundUnlocked` and this re-runs with sound.
+  const applyPlayback = useCallback(() => {
+    const el = ref.current;
+    if (!el || !visible.current) return;
+    el.muted = muted;
+    const p = el.play();
+    if (p && typeof p.catch === "function") {
+      p.catch(() => {
+        if (!el.muted) {
+          el.muted = true;
+          el.play().catch(() => {});
+        }
+      });
+    }
+  }, [muted]);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-          el.play().catch(() => {});
-        } else {
-          el.pause();
-        }
+        const vis = entry.isIntersecting && entry.intersectionRatio >= 0.6;
+        visible.current = vis;
+        if (vis) applyPlayback();
+        else el.pause();
       },
       { threshold: [0, 0.6, 1] },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [applyPlayback]);
+
+  // Re-apply when the preference flips or a gesture unlocks sound mid-view.
+  useEffect(() => {
+    applyPlayback();
+  }, [applyPlayback, soundUnlocked]);
 
   return (
     <>
@@ -136,7 +168,7 @@ function AutoplayVideo({ src, poster }: { src: string; poster?: string | null })
         aria-label={muted ? "Unmute" : "Mute"}
         onClick={(e) => {
           e.stopPropagation();
-          setMuted((m) => !m);
+          setMuted(!muted);
         }}
         onDoubleClick={(e) => e.stopPropagation()}
         className="absolute right-3 bottom-3 flex size-9 items-center justify-center rounded-full bg-background/80 text-foreground shadow-soft backdrop-blur transition hover:bg-background"
