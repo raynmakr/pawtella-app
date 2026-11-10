@@ -23,7 +23,7 @@ const components: Components = {
   strong: ({ node, ...p }) => <strong className="font-semibold text-foreground" {...p} />,
   hr: ({ node, ...p }) => <hr className="border-border" {...p} />,
   blockquote: ({ node, ...p }) => (
-    <blockquote className="rounded-r-lg border-l-4 border-primary/50 bg-primary/5 px-4 py-3 text-[15px] leading-relaxed text-foreground/90 [&>p]:my-1.5" {...p} />
+    <blockquote className="rounded-r-lg border-l-2 border-primary/40 bg-primary/5 px-4 py-3 text-[15px] leading-relaxed text-foreground/90 [&>p]:my-1.5" {...p} />
   ),
   table: ({ node, ...p }) => (
     <div className="-mx-1 overflow-x-auto">
