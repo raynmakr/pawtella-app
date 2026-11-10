@@ -294,6 +294,11 @@ async function deleteAccount(req) {
       [userId, `deleted_${userId}`],
     );
     await tx.query('DELETE FROM password_resets WHERE user_id = $1', [userId]);
+    // AI context memory + chat history: the user row is anonymized (not deleted) so FK cascade
+    // won't fire — remove it explicitly. Deleting conversations cascades their messages.
+    await tx.query('DELETE FROM ai_user_facts WHERE user_id = $1', [userId]);
+    await tx.query('DELETE FROM ai_user_memory WHERE user_id = $1', [userId]);
+    await tx.query('DELETE FROM ai_conversations WHERE user_id = $1', [userId]);
     await tx.query('DELETE FROM pets WHERE user_id = $1', [userId]);
     await tx.query('DELETE FROM referral_codes WHERE user_id = $1', [userId]);
     await tx.query('DELETE FROM follows WHERE follower_id = $1 OR followee_id = $1', [userId]);

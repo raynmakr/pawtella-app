@@ -14,6 +14,12 @@ Two providers, one rule: **every AI call runs server-side** (`lib/claude.js`, `l
 
 Prompts and triage rules live in `lib/ai-assistant.js`. Conversations persist in `ai_conversations` / `ai_messages`.
 
+### User context memory (`lib/ai-memory.js`, migration 013)
+
+The assistant keeps lasting per-user context so it improves over time. After a conversation, the `extract-ai-memory` cron (every 15 min, async so chat latency is unaffected) runs a schema-validated Claude extraction over the transcript and stores deduped, user-editable **facts**: owner profile (tone, preferences, budget sensitivity, household, city-level location), a profile per pet (personality, diet, allergies, conditions, meds, vet notes, likes/dislikes), third-party vendors mentioned, and a running health-advice summary. Order history is computed live from `shop_orders` at prompt time, never duplicated. `buildMemoryContext()` injects a compact, token-budgeted block into every future system prompt.
+
+Privacy (Canada / PIPEDA): payment data and passwords are never stored (the prompt forbids it and a regex scrubs card/credential patterns). Users view, edit and delete individual facts, clear everything, or turn memory off entirely at **Settings → What Pawtella AI remembers** (`GET/PATCH/DELETE /api/ai/memory`). Account deletion purges all of it; memory off means nothing new is saved and saved memory is not used.
+
 ## xAI Grok Imagine (images and videos)
 
 | Kind | API | Model (env) | Cost (provider) |

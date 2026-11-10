@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -8,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { CameraIcon, Loader2Icon, LogOutIcon, MonitorIcon, MoonIcon, SunIcon, Trash2Icon } from "lucide-react";
+import { BrainIcon, CameraIcon, ChevronRightIcon, Loader2Icon, LogOutIcon, MonitorIcon, MoonIcon, SunIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -250,6 +251,19 @@ export function SettingsScreen() {
                 onChange={(v) => void patchFlag({ marketingOptIn: v })}
                 disabled={!user}
               />
+              <Link
+                href="/settings/ai-memory"
+                className="flex items-center justify-between gap-4 py-3 last:pb-0 transition hover:text-primary"
+              >
+                <span className="flex items-start gap-3">
+                  <BrainIcon className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+                  <span>
+                    <span className="block text-[15px] font-semibold">What Pawtella AI remembers</span>
+                    <span className="block text-sm text-muted-foreground">Review, edit or delete what the assistant remembers, or turn memory off.</span>
+                  </span>
+                </span>
+                <ChevronRightIcon className="size-5 shrink-0 text-muted-foreground" />
+              </Link>
             </div>
           </Section>
         </div>

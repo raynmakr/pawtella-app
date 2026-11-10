@@ -4,6 +4,7 @@ import { one, many, withTransaction } from '../../lib/db.js';
 import { requireAuth } from '../../lib/auth.js';
 import { camelize } from '../../lib/serialize.js';
 import { reply as assistantReply } from '../../lib/ai-assistant.js';
+import { buildMemoryContext } from '../../lib/ai-memory.js';
 
 const MAX_MESSAGE = 4000;
 const HISTORY_TURNS = 20;
@@ -112,6 +113,12 @@ export default route({
     if (imageUrl) userContent.push({ type: 'image', url: imageUrl });
     if (message) userContent.push({ type: 'text', text: message });
 
+    // Inject the user's remembered context (never blocks the reply if it fails).
+    const memoryContext = await buildMemoryContext(userId, { pets }).catch((err) => {
+      console.warn('[ai] memory context failed', { userId, error: err?.message });
+      return '';
+    });
+
     const { reply, usage, model } = await assistantReply({
       user,
       pet,
@@ -120,6 +127,7 @@ export default route({
       message: message || 'What do you see in this photo of my pet?',
       imageUrl,
       location: location || (user.lat && user.lng ? { lat: user.lat, lng: user.lng } : null),
+      memoryContext,
     });
 
     await withTransaction(async (tx) => {

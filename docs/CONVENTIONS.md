@@ -143,6 +143,15 @@ Mock mode (no `MEDIA_S3_*` keys) echoes a data URL and touches nothing. See also
 - `chat({ system, messages, model?, maxTokens?, temperature?, tools?, toolChoice? }) → { text, toolCalls?, usage: { inputTokens, outputTokens }, stopReason }`
 - `json({ system, prompt, schema?, model? }) → parsed object` (robust JSON extraction)
 
+### lib/ai-memory.js (Backend B) — per-user AI context memory (migration 013)
+- `buildMemoryContext(userId, { pets?, maxChars? }) → string` — compact, token-budgeted block injected into the assistant system prompt (owner/pet/vendor facts, health summary, and order history computed live from `shop_orders`). Empty string when memory is off/empty.
+- `extractForConversation(conversationId)` / `runMemoryExtraction({ limit })` — background extraction (cron `extract-ai-memory`, every 15 min); dedupes facts (one row per user/category/key/pet) and refreshes the health summary. Honors the per-user toggle; idempotent via `ai_conversations.memory_extracted_at`.
+- `extractProfile({ messages, pets, existingSummary })` (schema-validated via `EXTRACTION_SCHEMA`), `storeExtraction({ userId, conversationId, extracted, pets })`.
+- Settings: `getMemory(userId)`, `setEnabled`, `setHealthSummary`, `updateFact`, `deleteFact`, `clearMemory`, and `purgeMemory(userId, tx?)` (hard-delete, called from account deletion since the user row is anonymized not removed). Never stores payment data or passwords (prompt forbids it + a regex scrub).
+
+### lib/catalog.js (Backend C/G) — customer-facing availability
+- `isProductAvailable(product)`, `isVariantAvailable(variant)`, `filterAvailableProducts(products)`, `availableVariants(product)`. Out-of-stock products/variants are hidden everywhere customers browse (shop, collections, search, AI suggestions, pet picks) unless set to continue selling when out of stock (Storefront `availableForSale`). They reappear when restocked.
+
 ### lib/xai.js (Backend B)
 - `isMock`
 - `generateImage({ prompt, aspectRatio?, resolution? }) → { url, costUsdTicks? }`
@@ -211,7 +220,7 @@ Upload (`api/upload.js`): `POST /api/upload { kind: 'image'|'video', contentType
 
 Points (`api/points.js`): `GET /api/points` → `{ balance, lifetimeEarned, held, rules: { valueCents, minRedeem, maxRedeemPercent, prices }, ways: [...] }`, `GET /api/points/transactions?page`, `POST /api/points/hold { cartId, points }` → `{ hold, cart }`, `DELETE /api/points/hold/:id`, `GET /api/points/packs`.
 
-AI (`api/ai/*.js`): `POST /api/ai/chat { conversationId?, petId?, message, imageUrl?, location? }` → `{ conversationId, reply: { text, vetAlert?, productSuggestions?, petProfileUpdates?, partnerResults? } }`, `GET /api/ai/chat` (list conversations), `GET /api/ai/chat/:id` (messages); `POST /api/ai/caption { imageUrl, petName? }` → `{ captions: string[] }`; `GET /api/ai/presets`; `POST /api/ai/generate { kind, prompt?, presetId?, petId?, sourceImageUrl?, duration?, hd?, challengeId? }` → generation; `GET /api/ai/generate` (mine), `GET /api/ai/generate/:id` (polls provider when pending), `POST /api/ai/generate/:id/post { caption?, featureConsent? }` → creates feed post; `POST /api/ai/shop-assist { message, petId? }` → `{ intent, query, productHandles, reply }`.
+AI (`api/ai/*.js`): `POST /api/ai/chat { conversationId?, petId?, message, imageUrl?, location? }` → `{ conversationId, reply: { text, vetAlert?, productSuggestions?, petProfileUpdates?, partnerResults? } }`, `GET /api/ai/chat` (list conversations), `GET /api/ai/chat/:id` (messages); `POST /api/ai/caption { imageUrl, petName? }` → `{ captions: string[] }`; `GET /api/ai/presets`; `POST /api/ai/generate { kind, prompt?, presetId?, petId?, sourceImageUrl?, duration?, hd?, challengeId? }` → generation; `GET /api/ai/generate` (mine), `GET /api/ai/generate/:id` (polls provider when pending), `POST /api/ai/generate/:id/post { caption?, featureConsent? }` → creates feed post; `POST /api/ai/shop-assist { message, petId? }` → `{ intent, query, productHandles, reply }`. AI memory (`api/ai/memory.js`): `GET /api/ai/memory` → `{ enabled, healthSummary, facts, updatedAt }`, `PATCH /api/ai/memory { enabled?, healthSummary? }`, `PATCH /api/ai/memory/facts/:id { value }`, `DELETE /api/ai/memory/facts/:id`, `DELETE /api/ai/memory` (clear all).
 
 Shop (`api/shop.js`): `GET /api/shop/collections`, `GET /api/shop/products?collection&q&cursor`, `GET /api/shop/products/:handle` (+ `stock`, `reviews` summary), `POST /api/shop/cart { cartId?, lines }`, `GET /api/shop/cart/:id`, `PATCH /api/shop/cart/:id { lines }`, `DELETE /api/shop/cart/:id/lines { lineIds }`, `GET /api/shop/orders`, `GET /api/shop/orders/:id`, `GET /api/shop/fulfillment` (depot address/hours, delivery zone text). Reviews (`api/reviews.js`): `GET /api/reviews?handle`, `POST /api/reviews { productHandle, orderId?, rating, body?, photoUrl?, petId? }`.
 
@@ -227,7 +236,7 @@ Inventory (`api/inventory.js`): `POST /api/inventory/import` (CSV body or `{ row
 
 Admin (`api/admin.js`, role admin): `GET /api/admin/metrics`, `GET/POST/PATCH /api/admin/challenges`, `GET/PATCH /api/admin/partners`, `GET/PATCH /api/admin/sourcing`, `GET/PATCH /api/admin/reports`, `POST /api/admin/points { userId, amount, reason }`.
 
-Cron (`api/cron/*.js`): finalize-generations, run-automations, sync-inventory, release-holds, close-challenges, partner-tiers, expire-points, admin-digest.
+Cron (`api/cron/*.js`): finalize-generations, run-automations, extract-ai-memory, sync-inventory, release-holds, close-challenges, partner-tiers, expire-points, admin-digest.
 
 ## Ports for parallel local testing
 Backend A 3001 · B 3002 · C 3003 · D 3004 · E 3005 · F 3006 · G 3007 · integration 3000.

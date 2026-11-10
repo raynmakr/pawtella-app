@@ -69,6 +69,10 @@
       "destination": "/api/ai/chat"
     },
     {
+      "source": "/api/ai/memory/:path*",
+      "destination": "/api/ai/memory"
+    },
+    {
       "source": "/api/shop/:path*",
       "destination": "/api/shop"
     },
@@ -120,6 +124,10 @@
     },
     {
       "path": "/api/cron/run-automations",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/extract-ai-memory",
       "schedule": "*/15 * * * *"
     },
     {

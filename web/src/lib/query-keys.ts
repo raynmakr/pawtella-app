@@ -33,6 +33,7 @@ export const queryKeys = {
     presets: ["ai", "presets"] as const,
     generations: ["ai", "generations"] as const,
     generation: (id: string | number) => ["ai", "generations", String(id)] as const,
+    memory: ["ai", "memory"] as const,
   },
   shop: {
     collections: ["shop", "collections"] as const,
