@@ -19,7 +19,7 @@ mobile/         Expo SDK 58 app (TypeScript). Routes in mobile/src/app.
 - **ESM everywhere** (`"type": "module"`): `import x from '../lib/x.js'` with the `.js` extension.
 - **Every function uses `route()` from `lib/http.js`.** Return a value to send JSON 200, or write to
   `res` yourself. Throw `ApiError` (or the helpers `badRequest`, `unauthorized`, `forbidden`,
-  `notFound`, `conflict`) for expected failures. Never `res.status(500)` by hand.
+  `notFound`, `conflict`, `tooMany`, `serviceUnavailable`) for expected failures. Never `res.status(500)` by hand.
 - **Route families:** `vercel.json` rewrites `/api/<area>/:path*` → `/api/<area>`. Inside
   `api/<area>.js` use `segments(req, '/api/<area>')` to get the remaining path parts and dispatch
   on `[method, segments]`. One file per area listed in `vercel.json`. If you need a new family,
@@ -157,6 +157,7 @@ Mock mode (no `MEDIA_S3_*` keys) echoes a data URL and touches nothing. See also
 - `generateImage({ prompt, aspectRatio?, resolution? }) → { url, costUsdTicks? }`
 - `startVideo({ prompt?, imageUrl?, duration, resolution, model }) → { requestId }`
 - `getVideo(requestId) → { status: 'pending'|'done'|'failed', progress, url?, durationSeconds?, costUsdTicks?, error? }`
+- **Mock mode never costs Paw Points.** `createGeneration` refuses with `503 "AI generation is temporarily unavailable"` (and logs a warning) when `xai.isMock && env.isProd` — before any point deduction, so a production deploy missing `XAI_API_KEY` can never charge for a placeholder. In dev/test the mock still runs but `finalizeDone` auto-refunds the charge on delivery (idempotent via `refundGeneration`), so the balance nets to zero.
 
 ### lib/shopify.js (Backend C) — same interface implemented by lib/shopify-mock.js; `lib/shopify.js` re-exports the right one based on `flags.hasShopify`
 - `isMock`

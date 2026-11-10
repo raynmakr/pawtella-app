@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import { one, query, closePool } from '../lib/db.js';
 import { signToken } from '../lib/auth.js';
 import { getBalance } from '../lib/points.js';
+import { env } from '../lib/env.js';
 import { generationCost } from '../lib/points-rules.js';
 import * as claude from '../lib/claude.js';
 import * as xai from '../lib/xai.js';
@@ -67,7 +68,7 @@ test('mock mode is on for both providers in tests', () => {
   assert.equal(xai.isMock, true);
 });
 
-test('generate image (mock) debits points and returns a done generation', async () => {
+test('generate image (mock in dev/test) charges then auto-refunds: net zero points', async () => {
   const { user, pet, token } = await makeUser(10);
   const res = await call(generateHandler, 'POST', '/api/ai/generate', { token, body: { kind: 'image', presetId: 'astronaut', petId: pet.id } });
   assert.equal(res.status, 200, JSON.stringify(res.body));
@@ -75,15 +76,19 @@ test('generate image (mock) debits points and returns a done generation', async 
   assert.equal(g.status, 'done');
   assert.equal(g.kind, 'image');
   assert.equal(g.pointsCharged, generationCost({ kind: 'image' }));
+  // Mock mode has no real provider, so the charge is given straight back on delivery.
+  assert.equal(g.pointsRefunded, generationCost({ kind: 'image' }));
   assert.match(g.prompt, /Luna/);
   assert.ok(g.outputUrl);
   assert.ok(g.watermarkedUrl);
   assert.equal(g.providerOutputUrl, undefined);
   const b = await getBalance(user.id);
-  assert.equal(b.pawPoints, 10 - 2);
+  assert.equal(b.pawPoints, 10); // net zero: charged then refunded
   const tx = await one(`SELECT * FROM point_transactions WHERE user_id = $1 AND type = 'spend'`, [user.id]);
   assert.equal(tx.ref_type, 'generation');
   assert.equal(tx.ref_id, String(g.id));
+  const refund = await one(`SELECT * FROM point_transactions WHERE user_id = $1 AND type = 'refund' AND ref_id = $2`, [user.id, String(g.id)]);
+  assert.equal(refund.amount, generationCost({ kind: 'image' }));
   const ev = await one(`SELECT 1 FROM events WHERE user_id = $1 AND name = 'generation_done'`, [user.id]);
   assert.ok(ev);
   const notif = await one(`SELECT 1 FROM notifications WHERE user_id = $1 AND journey = 'generation_ready'`, [user.id]);
@@ -94,6 +99,45 @@ test('generate image (mock) debits points and returns a done generation', async 
   assert.equal(list.body.generations.length, 1);
   const detail = await call(generateHandler, 'GET', `/api/ai/generate/${g.id}`, { token });
   assert.equal(detail.body.status, 'done');
+});
+
+test('production with no XAI key: returns 503 before charging, nothing deducted or created, warns', async () => {
+  const { user, pet, token } = await makeUser(10);
+  const warnings = [];
+  const realWarn = console.warn;
+  console.warn = (...args) => { warnings.push(args.join(' ')); };
+  env.isProd = true;
+  let res;
+  try {
+    res = await call(generateHandler, 'POST', '/api/ai/generate', { token, body: { kind: 'image', presetId: 'astronaut', petId: pet.id } });
+  } finally {
+    env.isProd = false;
+    console.warn = realWarn;
+  }
+  assert.equal(res.status, 503, JSON.stringify(res.body));
+  assert.match(res.body.error, /temporarily unavailable/i);
+  // No point movement and no generation row.
+  assert.equal((await getBalance(user.id)).pawPoints, 10);
+  assert.equal((await one('SELECT count(*)::int AS n FROM ai_generations WHERE user_id = $1', [user.id])).n, 0);
+  assert.equal((await one(`SELECT count(*)::int AS n FROM point_transactions WHERE user_id = $1`, [user.id])).n, 0);
+  assert.ok(warnings.some((w) => /XAI_API_KEY|unavailable|mock/i.test(w)), `expected a warning, got: ${JSON.stringify(warnings)}`);
+});
+
+test('production with no XAI key: video is also blocked before charging', async () => {
+  const { user, token } = await makeUser(50);
+  env.isProd = true;
+  let res;
+  try {
+    res = await call(generateHandler, 'POST', '/api/ai/generate', {
+      token,
+      body: { kind: 'video', prompt: 'Luna runs', sourceImageUrl: 'https://placedog.net/500/500', duration: 6 },
+    });
+  } finally {
+    env.isProd = false;
+  }
+  assert.equal(res.status, 503, JSON.stringify(res.body));
+  assert.equal((await getBalance(user.id)).pawPoints, 50);
+  assert.equal((await one('SELECT count(*)::int AS n FROM ai_generations WHERE user_id = $1', [user.id])).n, 0);
 });
 
 test('generate rejects when points are short (402) and nothing is created', async () => {
@@ -127,12 +171,14 @@ test('video: running → poll → done, HD pricing and duration snapping', async
   assert.equal(res.body.pointsCharged, 24); // 12 × HD 2
   assert.equal(res.body.resolution, '1080p');
   assert.match(res.body.providerRequestId, /^mock-/);
-  assert.equal((await getBalance(user.id)).pawPoints, 26);
+  assert.equal((await getBalance(user.id)).pawPoints, 26); // charged up-front while running
   const poll = await call(generateHandler, 'GET', `/api/ai/generate/${res.body.id}`, { token });
   assert.equal(poll.body.status, 'done');
   assert.equal(poll.body.outputUrl, xai.MOCK_VIDEO_URL);
   assert.equal(poll.body.progress, 100);
-  assert.equal((await getBalance(user.id)).pawPoints, 26);
+  // Mock delivery auto-refunds in dev/test, so the user ends net zero.
+  assert.equal(poll.body.pointsRefunded, 24);
+  assert.equal((await getBalance(user.id)).pawPoints, 50);
 });
 
 test('failed video refunds the charge', async () => {
