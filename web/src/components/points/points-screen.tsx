@@ -23,6 +23,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/page-header";
 import { ErrorState } from "@/components/error-state";
 import { PawIcon } from "@/components/logo";
+import { Mascot } from "@/components/mascot";
+import { useCountUp } from "@/hooks/use-count-up";
 import { pointsService } from "@/services/points";
 import { shopService } from "@/services/shop";
 import { addToCart } from "@/services/cart";
@@ -87,6 +89,7 @@ export function PointsScreen() {
   const ways = data?.ways ?? [];
   const doneWays = ways.filter((w) => w.done).length;
   const oneTime = ways.filter((w) => !w.repeatable);
+  const displayBalance = useCountUp(balance);
 
   return (
     <>
@@ -103,13 +106,17 @@ export function PointsScreen() {
 
       {/* Hero */}
       <section className="relative overflow-hidden rounded-card bg-points p-6 text-points-foreground shadow-lift ring-1 ring-points/60 sm:p-8">
-        <PawIcon className="absolute -right-6 -bottom-8 size-44 opacity-10" />
+        <Mascot
+          pose="wave"
+          aria-hidden
+          className="pointer-events-none absolute -right-3 -bottom-4 w-28 drop-shadow-[0_6px_14px_rgba(58,42,5,0.22)] sm:w-32"
+        />
         <p className="text-xs font-bold tracking-wider uppercase opacity-80">Your balance</p>
         <div className="mt-1 flex items-end gap-3">
           {q.isLoading && !user ? (
             <Skeleton className="h-14 w-40 bg-points-foreground/20" />
           ) : (
-            <p className="font-heading text-5xl font-extrabold tabular-nums sm:text-6xl">{formatPoints(balance)}</p>
+            <p className="font-heading text-5xl font-extrabold tabular-nums sm:text-6xl">{formatPoints(displayBalance)}</p>
           )}
           <p className="pb-2 font-heading text-lg font-bold">PP</p>
         </div>
