@@ -11,9 +11,11 @@ const suffix = Math.random().toString(36).slice(2, 10);
 const NOW = new Date();
 
 async function makeUser(opts = {}) {
+  // Marketing journeys only deliver to opted-in users (CASL); default these test users to opted in
+  // so the delivery-mechanics assertions exercise the "sent" path.
   const row = await one(
-    `INSERT INTO users (email, handle, display_name, paw_points, created_at, last_seen_at) VALUES ($1, $2, $3, $4, $5, $5) RETURNING id`,
-    [`auto-${suffix}-${Math.random().toString(36).slice(2, 6)}@test.local`, `auto_${suffix}_${Math.random().toString(36).slice(2, 6)}`, 'Auto Tester', opts.pawPoints ?? 30, opts.createdAt ?? NOW],
+    `INSERT INTO users (email, handle, display_name, paw_points, created_at, last_seen_at, marketing_opt_in) VALUES ($1, $2, $3, $4, $5, $5, $6) RETURNING id`,
+    [`auto-${suffix}-${Math.random().toString(36).slice(2, 6)}@test.local`, `auto_${suffix}_${Math.random().toString(36).slice(2, 6)}`, 'Auto Tester', opts.pawPoints ?? 30, opts.createdAt ?? NOW, opts.marketingOptIn ?? true],
   );
   return row.id;
 }

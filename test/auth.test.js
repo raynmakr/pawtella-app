@@ -160,7 +160,7 @@ test('register → login → me; welcome bonus, referral code, handle generation
   const s = suffix();
   const email = `Test.User+${s}@Example.com`;
   const reg = await call(authHandler, 'POST', '/api/auth/register', {
-    body: { email, password: 'password123', displayName: 'Test User' },
+    body: { email, password: 'password123', displayName: 'Test User', termsAccepted: true, marketingOptIn: true },
   });
   assert.equal(reg.status, 200, JSON.stringify(reg.body));
   assert.equal(reg.body.isNew, true);
@@ -171,6 +171,12 @@ test('register → login → me; welcome bonus, referral code, handle generation
   assert.equal(reg.body.user.bonuses.welcome, true);
   assert.match(reg.body.user.referralCode, /^[A-Z0-9]{6,8}$/);
   assert.equal('passwordHash' in reg.body.user, false);
+  assert.equal(reg.body.user.termsVersion, '1.0', 'terms version recorded');
+  assert.equal(reg.body.user.needsTermsAcceptance, false, 'current terms accepted at signup');
+  assert.equal(reg.body.user.marketingOptIn, true, 'marketing opt-in recorded when ticked');
+  const consent = await one('SELECT terms_accepted_at, marketing_opt_in_at FROM users WHERE id = $1', [reg.body.user.id]);
+  assert.ok(consent.terms_accepted_at, 'terms acceptance timestamp stored');
+  assert.ok(consent.marketing_opt_in_at, 'marketing consent timestamp stored');
 
   const ev = await one(`SELECT 1 FROM events WHERE user_id = $1 AND name = 'signup'`, [reg.body.user.id]);
   assert.ok(ev, 'signup event tracked');
@@ -197,19 +203,22 @@ test('register → login → me; welcome bonus, referral code, handle generation
 test('duplicate email → 409; duplicate handle → 409; invalid inputs → 400', async () => {
   const s = suffix();
   const email = `dup${s}@example.com`;
-  const first = await call(authHandler, 'POST', '/api/auth/register', { body: { email, password: 'password123', handle: `dup_${s}` } });
+  const first = await call(authHandler, 'POST', '/api/auth/register', { body: { email, password: 'password123', handle: `dup_${s}`, termsAccepted: true } });
   assert.equal(first.status, 200, JSON.stringify(first.body));
   assert.equal(first.body.user.handle, `dup_${s}`);
-  const again = await call(authHandler, 'POST', '/api/auth/register', { body: { email: email.toUpperCase(), password: 'password123' } });
+  assert.equal(first.body.user.marketingOptIn, false, 'CASL: marketing off unless opted in');
+  const again = await call(authHandler, 'POST', '/api/auth/register', { body: { email: email.toUpperCase(), password: 'password123', termsAccepted: true } });
   assert.equal(again.status, 409);
-  const sameHandle = await call(authHandler, 'POST', '/api/auth/register', { body: { email: `other${s}@example.com`, password: 'password123', handle: `DUP_${s}` } });
+  const sameHandle = await call(authHandler, 'POST', '/api/auth/register', { body: { email: `other${s}@example.com`, password: 'password123', handle: `DUP_${s}`, termsAccepted: true } });
   assert.equal(sameHandle.status, 409);
-  const badHandle = await call(authHandler, 'POST', '/api/auth/register', { body: { email: `x${s}@example.com`, password: 'password123', handle: 'no spaces!' } });
+  const badHandle = await call(authHandler, 'POST', '/api/auth/register', { body: { email: `x${s}@example.com`, password: 'password123', handle: 'no spaces!', termsAccepted: true } });
   assert.equal(badHandle.status, 400);
-  const shortPw = await call(authHandler, 'POST', '/api/auth/register', { body: { email: `y${s}@example.com`, password: 'short' } });
+  const shortPw = await call(authHandler, 'POST', '/api/auth/register', { body: { email: `y${s}@example.com`, password: 'short', termsAccepted: true } });
   assert.equal(shortPw.status, 400);
-  const badEmail = await call(authHandler, 'POST', '/api/auth/register', { body: { email: 'nope', password: 'password123' } });
+  const badEmail = await call(authHandler, 'POST', '/api/auth/register', { body: { email: 'nope', password: 'password123', termsAccepted: true } });
   assert.equal(badEmail.status, 400);
+  const noTerms = await call(authHandler, 'POST', '/api/auth/register', { body: { email: `nt${s}@example.com`, password: 'password123' } });
+  assert.equal(noTerms.status, 400, 'account creation blocked until Terms are accepted');
   const unknown = await call(authHandler, 'POST', '/api/auth/whatever', { body: {} });
   assert.equal(unknown.status, 404);
 });
@@ -236,7 +245,7 @@ test('ensureHandle appends numeric suffixes when the base is taken', async () =>
 
 test('referral attribution: signup bonus to the friend, conversion bonus to the referrer once', async () => {
   const s = suffix();
-  const referrer = await call(authHandler, 'POST', '/api/auth/register', { body: { email: `ref${s}@example.com`, password: 'password123', displayName: 'Ref Errer' } });
+  const referrer = await call(authHandler, 'POST', '/api/auth/register', { body: { email: `ref${s}@example.com`, password: 'password123', displayName: 'Ref Errer', termsAccepted: true } });
   assert.equal(referrer.status, 200);
   const code = referrer.body.user.referralCode;
   assert.equal(await getOrCreateReferralCode(referrer.body.user.id), code, 'code is stable');
@@ -244,7 +253,7 @@ test('referral attribution: signup bonus to the friend, conversion bonus to the 
   assert.equal(await resolveCode('ZZZZZZ99'), null);
 
   const friend = await call(authHandler, 'POST', '/api/auth/register', {
-    body: { email: `friend${s}@example.com`, password: 'password123', referralCode: code },
+    body: { email: `friend${s}@example.com`, password: 'password123', referralCode: code, termsAccepted: true },
   });
   assert.equal(friend.status, 200, JSON.stringify(friend.body));
   assert.equal(friend.body.user.pawPoints, RULES.welcomeBonus + RULES.referredSignupBonus);
@@ -272,7 +281,7 @@ test('referral attribution: signup bonus to the friend, conversion bonus to the 
 
   // Self-referral and unknown codes are ignored without failing the signup.
   const selfish = await call(authHandler, 'POST', '/api/auth/register', {
-    body: { email: `self${s}@example.com`, password: 'password123', referralCode: 'NOPE99' },
+    body: { email: `self${s}@example.com`, password: 'password123', referralCode: 'NOPE99', termsAccepted: true },
   });
   assert.equal(selfish.status, 200);
   assert.equal(selfish.body.user.pawPoints, RULES.welcomeBonus);
@@ -285,7 +294,7 @@ test('referral attribution: signup bonus to the friend, conversion bonus to the 
 test('forgot/reset password flow (mock email)', async () => {
   const s = suffix();
   const email = `reset${s}@example.com`;
-  const reg = await call(authHandler, 'POST', '/api/auth/register', { body: { email, password: 'password123' } });
+  const reg = await call(authHandler, 'POST', '/api/auth/register', { body: { email, password: 'password123', termsAccepted: true } });
   assert.equal(reg.status, 200);
   const forgot = await call(authHandler, 'POST', '/api/auth/forgot', { body: { email } });
   assert.equal(forgot.status, 200);
@@ -320,7 +329,7 @@ test('forgot/reset password flow (mock email)', async () => {
 test('DELETE /api/auth/account anonymizes the user and revokes access', async () => {
   const s = suffix();
   const email = `gone${s}@example.com`;
-  const reg = await call(authHandler, 'POST', '/api/auth/register', { body: { email, password: 'password123', displayName: 'Gone Soon' } });
+  const reg = await call(authHandler, 'POST', '/api/auth/register', { body: { email, password: 'password123', displayName: 'Gone Soon', termsAccepted: true } });
   assert.equal(reg.status, 200);
   const id = reg.body.user.id;
   const del = await call(authHandler, 'DELETE', '/api/auth/account', { token: reg.body.token });
@@ -342,6 +351,6 @@ test('DELETE /api/auth/account anonymizes the user and revokes access', async ()
   const profile = await call(usersHandler, 'GET', `/api/users/deleted_${id}`);
   assert.equal(profile.status, 404, 'deleted profiles are not public');
   // The email can be used again for a fresh account.
-  const again = await call(authHandler, 'POST', '/api/auth/register', { body: { email, password: 'password123' } });
+  const again = await call(authHandler, 'POST', '/api/auth/register', { body: { email, password: 'password123', termsAccepted: true } });
   assert.equal(again.status, 200);
 });

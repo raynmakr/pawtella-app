@@ -24,6 +24,7 @@ import {
   awardBonusOnce,
 } from '../lib/users.js';
 import { RULES } from '../lib/points-rules.js';
+import { TERMS_VERSION, PRIVACY_VERSION } from '../lib/legal.js';
 import { getOrCreateReferralCode, attributeSignup } from '../lib/referrals.js';
 import { track, EVENT } from '../lib/events.js';
 import { sendEmail } from '../lib/email.js';
@@ -69,7 +70,7 @@ function assertActive(user) {
  * Insert a new user and run every signup side effect in one transaction: handle, welcome
  * bonus, referral code, referral/partner attribution, signup event.
  */
-async function createUser({ email, passwordHash, appleId, googleId, displayName, avatarUrl, requestedHandle, referralCode, partnerCode, provider }) {
+async function createUser({ email, passwordHash, appleId, googleId, displayName, avatarUrl, requestedHandle, referralCode, partnerCode, provider, termsAccepted = false, marketingOptIn = false }) {
   return withTransaction(async (tx) => {
     let handle;
     if (requestedHandle !== undefined && requestedHandle !== null && requestedHandle !== '') {
@@ -81,10 +82,20 @@ async function createUser({ email, passwordHash, appleId, googleId, displayName,
       handle = await ensureHandle(displayName || email || 'pawfriend', tx);
     }
     const source = partnerCode ? 'partner' : referralCode ? 'invite' : 'organic';
+    const now = new Date();
     const user = await tx.one(
-      `INSERT INTO users (email, password_hash, apple_id, google_id, handle, display_name, avatar_url, signup_source, email_verified_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [email ?? null, passwordHash ?? null, appleId ?? null, googleId ?? null, handle, displayName ?? null, avatarUrl ?? null, source, provider && provider !== 'email' && email ? new Date() : null],
+      `INSERT INTO users (email, password_hash, apple_id, google_id, handle, display_name, avatar_url, signup_source, email_verified_at,
+         terms_version, terms_accepted_at, privacy_version, marketing_opt_in, marketing_opt_in_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
+      [
+        email ?? null, passwordHash ?? null, appleId ?? null, googleId ?? null, handle, displayName ?? null, avatarUrl ?? null, source,
+        provider && provider !== 'email' && email ? now : null,
+        termsAccepted ? TERMS_VERSION : null,
+        termsAccepted ? now : null,
+        termsAccepted ? PRIVACY_VERSION : null,
+        !!marketingOptIn,
+        marketingOptIn ? now : null,
+      ],
     );
     await awardBonusOnce(user.id, 'bonus_welcome', RULES.welcomeBonus, {
       source: 'welcome',
@@ -111,6 +122,8 @@ async function register(req) {
   const b = requireFields(body(req), ['email', 'password']);
   const email = normalizeEmail(b.email);
   validatePassword(b.password);
+  // Clickwrap: account creation is blocked until the user agrees to the Terms and Privacy Policy.
+  if (b.termsAccepted !== true) throw badRequest('You must agree to the Terms of Use and Privacy Policy to create an account.');
   if (await getUserByEmail(email)) throw conflict('An account with that email already exists');
   const passwordHash = await hashPassword(b.password);
   let user;
@@ -123,6 +136,8 @@ async function register(req) {
       referralCode: b.referralCode,
       partnerCode: b.partnerCode,
       provider: 'email',
+      termsAccepted: true,
+      marketingOptIn: b.marketingOptIn === true,
     });
   } catch (err) {
     if (isUniqueViolation(err)) throw conflict('An account with that email or handle already exists');
@@ -145,7 +160,7 @@ async function login(req) {
 }
 
 /** Shared find-or-create for social providers. */
-async function socialSignIn({ provider, providerId, email, displayName, avatarUrl, referralCode, partnerCode }) {
+async function socialSignIn({ provider, providerId, email, displayName, avatarUrl, referralCode, partnerCode, termsAccepted = false, marketingOptIn = false }) {
   const column = provider === 'apple' ? 'apple_id' : 'google_id';
   let user = provider === 'apple' ? await getUserByAppleId(providerId) : await getUserByGoogleId(providerId);
   let isNew = false;
@@ -167,6 +182,8 @@ async function socialSignIn({ provider, providerId, email, displayName, avatarUr
         referralCode,
         partnerCode,
         provider,
+        termsAccepted,
+        marketingOptIn,
       });
       isNew = true;
     } catch (err) {
@@ -197,6 +214,8 @@ async function apple(req) {
     avatarUrl: null,
     referralCode: b.referralCode,
     partnerCode: b.partnerCode,
+    termsAccepted: b.termsAccepted === true,
+    marketingOptIn: b.marketingOptIn === true,
   });
 }
 
@@ -211,6 +230,8 @@ async function google(req) {
     avatarUrl: claims.picture,
     referralCode: b.referralCode,
     partnerCode: b.partnerCode,
+    termsAccepted: b.termsAccepted === true,
+    marketingOptIn: b.marketingOptIn === true,
   });
 }
 
@@ -279,6 +300,19 @@ async function reset(req) {
   return respondSession(user);
 }
 
+/** Record that the signed-in user has accepted the current Terms and Privacy versions (re-acceptance banner). */
+async function acceptTerms(req) {
+  const { userId } = await requireAuth(req);
+  const user = await one(
+    `UPDATE users SET terms_version = $2, terms_accepted_at = now(), privacy_version = $3
+       WHERE id = $1 AND status <> 'deleted' RETURNING *`,
+    [userId, TERMS_VERSION, PRIVACY_VERSION],
+  );
+  if (!user) throw unauthorized('Account not found');
+  console.log('[auth] terms accepted', { userId, termsVersion: TERMS_VERSION });
+  return { user: await userPayload(user) };
+}
+
 /** App Store requirement: delete the account. We anonymize the row so ledgers stay consistent. */
 async function deleteAccount(req) {
   const { userId } = await requireAuth(req);
@@ -314,7 +348,7 @@ async function deleteAccount(req) {
 
 // ---------------------------------------------------------------------------------------------
 
-const POST_ROUTES = { register, login, apple, google, forgot, reset };
+const POST_ROUTES = { register, login, apple, google, forgot, reset, 'accept-terms': acceptTerms };
 
 export default route({
   POST: async (req) => {

@@ -64,7 +64,7 @@ function call(handler, method, url, { body, token, headers = {} } = {}) {
 async function registerUser(extra = {}) {
   const s = suffix();
   const r = await call(authHandler, 'POST', '/api/auth/register', {
-    body: { email: `pets${s}@example.com`, password: 'password123', ...extra },
+    body: { email: `pets${s}@example.com`, password: 'password123', termsAccepted: true, ...extra },
   });
   assert.equal(r.status, 200, JSON.stringify(r.body));
   return { token: r.body.token, user: r.body.user };
