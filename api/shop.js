@@ -10,6 +10,7 @@ import { track, EVENT } from '../lib/events.js';
 import { env } from '../lib/env.js';
 import { gid, isCartId, decodeCartToken } from '../lib/shopify-client.js';
 import { subscriptionOfferForProduct } from '../lib/subscriptions/offer.js';
+import { filterAvailableProducts } from '../lib/catalog.js';
 
 // Real Toronto depot (891 College St). Prefer the configured location, fall back to the known id.
 const DEPOT_LOCATION_ID = gid('Location', env.shopify.depotLocationId || '115648397619');
@@ -144,7 +145,9 @@ async function get(req) {
   if (head === 'products' && seg.length === 1) {
     const { collection, q, query, cursor, first } = req.query || {};
     const result = await shopify.getProducts({ collection, query: q || query, cursor, first });
-    return { ...result, isMock: shopify.isMock };
+    // Hide out-of-stock products from browse, collections and search (Shopify is the source of
+    // truth; continue-selling / special-order items stay visible). Restocked items reappear.
+    return { ...result, products: filterAvailableProducts(result.products), isMock: shopify.isMock };
   }
   if (head === 'products' && seg.length === 2) {
     const handle = decodeURIComponent(second);

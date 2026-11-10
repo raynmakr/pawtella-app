@@ -38,10 +38,16 @@ export function ProductScreen({ handle }: { handle: string }) {
   // null = one-time purchase; otherwise the chosen Subscribe & Save selling plan id.
   const [sellingPlanId, setSellingPlanId] = useState<string | null>(null);
 
+  // A variant is sellable when Shopify will sell it (units left, continue-selling, or untracked).
+  const sellableVariants = useMemo(
+    () => (product?.variants ?? []).filter((v) => v.availableForSale || (typeof v.quantityAvailable === "number" && v.quantityAvailable > 0)),
+    [product],
+  );
+
   const variant = useMemo(() => {
     if (!product) return null;
-    return product.variants.find((v) => v.id === variantId) ?? product.variants.find((v) => v.availableForSale) ?? product.variants[0] ?? null;
-  }, [product, variantId]);
+    return product.variants.find((v) => v.id === variantId) ?? sellableVariants[0] ?? product.variants[0] ?? null;
+  }, [product, variantId, sellableVariants]);
 
   const add = useMutation({
     mutationFn: () => addToCart({ variantId: variant!.id, quantity, sellingPlanId }),
@@ -143,7 +149,7 @@ export function ProductScreen({ handle }: { handle: string }) {
             <p className="text-sm text-muted-foreground">Special order: we bring it in for you. Estimated {stock.leadDays ?? 7} days to the depot or your door.</p>
           )}
 
-          {product.variants.length > 1 && (
+          {sellableVariants.length > 1 && (
             <div className="grid gap-1.5">
               <label className="text-sm font-semibold" htmlFor="variant">
                 Option
@@ -153,10 +159,10 @@ export function ProductScreen({ handle }: { handle: string }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {product.variants.map((v) => (
-                    <SelectItem key={v.id} value={v.id} disabled={!v.availableForSale}>
+                  {/* Out-of-stock variants are hidden, not just disabled. */}
+                  {sellableVariants.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
                       {v.title}
-                      {!v.availableForSale ? " · sold out" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

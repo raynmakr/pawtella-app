@@ -7,6 +7,7 @@ import { env } from '../../lib/env.js';
 import * as claude from '../../lib/claude.js';
 import * as shopify from '../../lib/shopify.js';
 import { describePet } from '../../lib/ai-assistant.js';
+import { filterAvailableProducts } from '../../lib/catalog.js';
 
 const INTENTS = ['search', 'reorder', 'recommend', 'question', 'other'];
 const SCHEMA = {
@@ -28,7 +29,8 @@ async function catalogSearch(query, first = 10) {
   if (typeof shopify.getProducts !== 'function') return [];
   try {
     const { products = [] } = (await shopify.getProducts({ query: query || undefined, first })) || {};
-    return products;
+    // Only ground suggestions in products a customer can actually buy right now.
+    return filterAvailableProducts(products);
   } catch (err) {
     console.error('[shop-assist] catalog search failed', { error: err.message });
     return [];
