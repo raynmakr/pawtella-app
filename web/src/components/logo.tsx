@@ -30,7 +30,11 @@ const sizes = {
   xl: { mark: "w-20", text: "text-5xl", gap: "gap-3.5" },
 };
 
-/** Pawtella lockup: Pip's head mark + "Pawtella" in the display face. */
+/**
+ * Pawtella lockup: Pip's head mark + the lowercase "pawtella" wordmark, set in the rounded display
+ * face (Nunito) in Depot Teal to echo the reference mark
+ * (web/public/brand/pawtella-mascot-original.png).
+ */
 export function Logo({ size = "md", markOnly = false, animate = true, className, ...props }: LogoProps) {
   const s = sizes[size];
   return (
@@ -38,11 +42,11 @@ export function Logo({ size = "md", markOnly = false, animate = true, className,
       <Mascot
         variant="mark"
         animate={animate}
-        className={cn("shrink-0 drop-shadow-[0_4px_10px_rgba(255,107,74,0.30)]", s.mark)}
+        className={cn("shrink-0 drop-shadow-[0_4px_10px_rgba(14,124,123,0.28)]", s.mark)}
       />
       {!markOnly && (
-        <span className={cn("font-heading font-extrabold tracking-tight text-foreground", s.text)}>
-          Paw<span className="text-primary">tella</span>
+        <span className={cn("font-heading font-extrabold lowercase tracking-tight text-secondary", s.text)}>
+          pawtella
         </span>
       )}
     </span>
