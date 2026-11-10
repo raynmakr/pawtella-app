@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 /**
  * Pip — the Pawtella mascot. A friendly cat-dog hybrid, authored as a clean vector face that
  * matches the brand's reference mark (web/public/brand/pawtella-mascot-original.png): a thick,
- * round-capped deep-teal outline, a cream face, one pointy cat ear (left) and one folded dog ear
+ * round-capped coral outline, a cream face, one pointy cat ear (left) and one folded dog ear
  * (right), simple oval eyes, a rounded nose, a cat "‿‿" smile, whiskers, freckles and a small
  * coral dot by the dog ear.
  *
@@ -34,10 +34,13 @@ interface MascotProps extends Omit<React.ComponentProps<"svg">, "pose"> {
   title?: string;
 }
 
-const DEEP = "#0e7c7b";
-const EAR = "#2f9794";
-const EAR_HI = "#4aa8a3";
-const EAR_HI2 = "#50aba6";
+// Brand coral outline + warm ear tints — matches the site's primary accent
+// (--primary #ff6b4a, the + button and active Ask tab). The outline is the
+// most saturated coral; the ears step lighter so the shape still reads.
+const DEEP = "#ff6b4a";
+const EAR = "#ff8a6e";
+const EAR_HI = "#ffa088";
+const EAR_HI2 = "#ffb49e";
 const CREAM = "#fdf1dc";
 const CORAL = "#ff6b4a";
 const CORAL_SOFT = "#ffd9cf";

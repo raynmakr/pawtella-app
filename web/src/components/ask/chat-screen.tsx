@@ -10,7 +10,7 @@ import { ErrorState } from "@/components/error-state";
 import { PetChips } from "@/components/pet-chips";
 import { toast } from "sonner";
 import { useSession } from "@/stores/session";
-import { useKeyboardStore } from "@/stores/keyboard";
+import { useKeyboardOpen } from "@/stores/keyboard";
 import { useConversation, useSendMessage } from "@/hooks/use-chat";
 import { useAiMemory, useAiMemoryMutations } from "@/hooks/use-ai-memory";
 import { errorMessage } from "@/lib/api";
@@ -45,13 +45,12 @@ export function ChatScreen() {
   const [consentDismissed, setConsentDismissed] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // On mobile, iOS Safari leaves `dvh` unchanged when the keyboard opens, so the
-  // composer would slide under it. When a keyboard inset is measured, size the
-  // chat to the real visible height (minus the sticky top bar) so the composer
-  // stays pinned just above the keyboard; the message list shrinks and scrolls.
-  const kbInset = useKeyboardStore((s) => s.inset);
-  const kbViewportHeight = useKeyboardStore((s) => s.viewportHeight);
-  const keyboardOpen = kbInset > 0;
+  // On mobile the keyboard is detected primarily via focus (iOS Safari lies about
+  // viewport height). While it's open the whole chat becomes a fixed overlay pinned
+  // to the real visible area via the --viewport-* CSS vars, with the bottom nav and
+  // floating + hidden, so the composer sits just above the keyboard and the list
+  // takes the rest.
+  const keyboardOpen = useKeyboardOpen();
 
   const memory = useAiMemory();
   const { setHealthConsent } = useAiMemoryMutations();
@@ -98,15 +97,20 @@ export function ChatScreen() {
 
   return (
     <div
-      className="flex h-[calc(100dvh-9.75rem)] flex-col md:h-[calc(100dvh-5rem)] md:flex-row md:gap-6"
-      // When the keyboard is open the bottom nav is hidden, so only the sticky
-      // top bar (~4.75rem incl. the page's top padding) sits above the chat.
-      style={keyboardOpen ? { height: `calc(${kbViewportHeight}px - 4.75rem)` } : undefined}
+      className={cn(
+        "flex flex-col md:static md:h-[calc(100dvh-5rem)] md:flex-row md:gap-6 md:bg-transparent md:px-0 md:pt-0",
+        keyboardOpen
+          ? // Fixed overlay pinned to the visual viewport (top + height from CSS vars the
+            // KeyboardListener keeps in sync) so iOS can't slide the composer under the keyboard.
+            "fixed inset-x-0 z-40 bg-background px-4 pt-2 pb-2 sm:px-6"
+          : "h-[calc(100dvh-9.75rem)]",
+      )}
+      style={keyboardOpen ? { top: "var(--viewport-offset-top, 0px)", height: "var(--viewport-height, 100dvh)" } : undefined}
     >
       <aside className="hidden w-64 shrink-0 md:block">{list}</aside>
 
       <section className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-2 pb-2">
+        <header className={cn("flex items-center gap-2 pb-2", keyboardOpen && "hidden")}>
           <div className="min-w-0 flex-1">
             <PetChips pets={pets} value={petId} onChange={setPetOverride} noneLabel="General" />
           </div>
@@ -163,7 +167,7 @@ export function ChatScreen() {
           </div>
         </div>
 
-        <div className="pt-3">
+        <div className={cn(keyboardOpen ? "pt-2" : "pt-3")}>
           {showHealthConsent && (
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-card border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
               <span className="min-w-0 flex-1 text-foreground/90">
@@ -195,9 +199,10 @@ export function ChatScreen() {
             onLocationChange={setLocation}
             text={text}
             onTextChange={setText}
+            large={isEmpty && !keyboardOpen}
             placeholder={pet ? `Ask about ${pet.name}…` : "Ask anything about pets…"}
           />
-          <p className="mt-1.5 px-2 text-center text-[11px] leading-relaxed text-muted-foreground">
+          <p className={cn("mt-1.5 px-2 text-center text-[11px] leading-relaxed text-muted-foreground", keyboardOpen && "hidden")}>
             Pawtella AI shares general info, not veterinary advice. In an emergency, contact a vet right away.
           </p>
         </div>
@@ -218,9 +223,9 @@ export function ChatScreen() {
 
 function EmptyChat({ petName, species, onPick }: { petName: string | null; species: string | null; onPick: (text: string) => void }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
-      <div className="mb-4 flex size-16 items-center justify-center rounded-3xl bg-coral-soft text-primary">
-        <MessageCircleHeartIcon className="size-8" />
+    <div className="flex flex-1 flex-col items-center justify-center gap-1 py-10 text-center">
+      <div className="mb-4 flex size-20 items-center justify-center rounded-3xl bg-coral-soft text-primary">
+        <MessageCircleHeartIcon className="size-10" />
       </div>
       <h2 className="text-xl">Ask about {petName ?? "your pet"}</h2>
       <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">

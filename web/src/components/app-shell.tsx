@@ -310,11 +310,12 @@ function MobileTabBar({ onCreate }: { onCreate: () => void }) {
   return (
     <nav
       aria-label="Primary"
-      // Slide the bar out of the way while the keyboard is open so it never covers a focused input.
+      // Fully remove the bar (and the floating +) while the keyboard is open so they
+      // never cover the composer — translating alone left a ghost strip on iOS.
       aria-hidden={keyboardOpen}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/90 pb-safe backdrop-blur-md transition-transform duration-200 md:hidden",
-        keyboardOpen && "pointer-events-none translate-y-full",
+        "fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/90 pb-safe backdrop-blur-md md:hidden",
+        keyboardOpen && "hidden",
       )}
     >
       <div className="grid h-16 grid-cols-5 items-end">

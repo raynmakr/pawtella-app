@@ -20,9 +20,11 @@ interface ComposerProps {
   /** Controlled text so the parent can inject suggested prompts. */
   text: string;
   onTextChange: (text: string) => void;
+  /** Roomier composer for the empty-chat state (keyboard closed). */
+  large?: boolean;
 }
 
-export function Composer({ disabled, onSend, location, onLocationChange, placeholder, text, onTextChange: setText }: ComposerProps) {
+export function Composer({ disabled, onSend, location, onLocationChange, placeholder, text, onTextChange: setText, large = false }: ComposerProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [locating, setLocating] = useState(false);
@@ -86,7 +88,7 @@ export function Composer({ disabled, onSend, location, onLocationChange, placeho
   };
 
   return (
-    <div className="rounded-card bg-card p-2 shadow-soft ring-1 ring-border focus-within:ring-primary/40">
+    <div className={cn("rounded-card bg-card shadow-soft ring-1 ring-border focus-within:ring-primary/40", large ? "p-3" : "p-2")}>
       {(imageUrl || uploading) && (
         <div className="mb-2 flex items-center gap-2 px-1">
           <div className="relative">
@@ -126,7 +128,11 @@ export function Composer({ disabled, onSend, location, onLocationChange, placeho
         rows={1}
         disabled={disabled}
         aria-label="Message"
-        className="max-h-40 min-h-11 resize-none border-0 bg-transparent px-2.5 py-2.5 shadow-none focus-visible:ring-0 dark:bg-transparent"
+        // text-base (16px) on all sizes so iOS Safari never auto-zooms the page on focus.
+        className={cn(
+          "max-h-40 resize-none border-0 bg-transparent px-2.5 py-2.5 !text-base shadow-none focus-visible:ring-0 md:!text-base dark:bg-transparent",
+          large ? "min-h-16" : "min-h-11",
+        )}
       />
       <div className="flex items-center justify-between gap-2 px-1 pt-1">
         <div className="flex items-center gap-1">
