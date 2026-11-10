@@ -21,6 +21,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Resize the layout (and dvh) when the on-screen keyboard opens, so pinned
+  // inputs stay above it instead of being overlaid. Honoured on Chrome Android;
+  // iOS Safari is handled via visualViewport in KeyboardListener.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

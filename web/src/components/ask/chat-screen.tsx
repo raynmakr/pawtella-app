@@ -10,6 +10,7 @@ import { ErrorState } from "@/components/error-state";
 import { PetChips } from "@/components/pet-chips";
 import { toast } from "sonner";
 import { useSession } from "@/stores/session";
+import { useKeyboardStore } from "@/stores/keyboard";
 import { useConversation, useSendMessage } from "@/hooks/use-chat";
 import { useAiMemory, useAiMemoryMutations } from "@/hooks/use-ai-memory";
 import { errorMessage } from "@/lib/api";
@@ -43,6 +44,14 @@ export function ChatScreen() {
   const [listOpen, setListOpen] = useState(false);
   const [consentDismissed, setConsentDismissed] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // On mobile, iOS Safari leaves `dvh` unchanged when the keyboard opens, so the
+  // composer would slide under it. When a keyboard inset is measured, size the
+  // chat to the real visible height (minus the sticky top bar) so the composer
+  // stays pinned just above the keyboard; the message list shrinks and scrolls.
+  const kbInset = useKeyboardStore((s) => s.inset);
+  const kbViewportHeight = useKeyboardStore((s) => s.viewportHeight);
+  const keyboardOpen = kbInset > 0;
 
   const memory = useAiMemory();
   const { setHealthConsent } = useAiMemoryMutations();
@@ -79,7 +88,7 @@ export function ChatScreen() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-  }, [messages.length, pending?.status]);
+  }, [messages.length, pending?.status, keyboardOpen]);
 
   const handleSend = async (p: { message: string; imageUrl: string | null; location: ChatLocation | null }) => {
     await send({ conversationId, petId, message: p.message, imageUrl: p.imageUrl, location: p.location });
@@ -88,7 +97,12 @@ export function ChatScreen() {
   const list = <ConversationList activeId={conversationId} onSelect={selectConversation} />;
 
   return (
-    <div className="flex h-[calc(100dvh-9.75rem)] flex-col md:h-[calc(100dvh-5rem)] md:flex-row md:gap-6">
+    <div
+      className="flex h-[calc(100dvh-9.75rem)] flex-col md:h-[calc(100dvh-5rem)] md:flex-row md:gap-6"
+      // When the keyboard is open the bottom nav is hidden, so only the sticky
+      // top bar (~4.75rem incl. the page's top padding) sits above the chat.
+      style={keyboardOpen ? { height: `calc(${kbViewportHeight}px - 4.75rem)` } : undefined}
+    >
       <aside className="hidden w-64 shrink-0 md:block">{list}</aside>
 
       <section className="flex min-h-0 min-w-0 flex-1 flex-col">

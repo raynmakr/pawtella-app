@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Footer } from "@/components/footer";
+import { KeyboardListener } from "@/components/keyboard-listener";
 import { TermsAcceptanceBanner } from "@/components/legal/terms-acceptance-banner";
 import {
   BellIcon,
@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/stores/session";
 import { useUnreadCount } from "@/hooks/use-notifications";
 import { useCartCount } from "@/stores/cart";
+import { useKeyboardOpen } from "@/stores/keyboard";
 import { authService } from "@/services/auth";
 import { Logo, PawIcon } from "./logo";
 import { PointsPill } from "./points-pill";
@@ -305,10 +306,16 @@ function MobileTopBar() {
 
 function MobileTabBar({ onCreate }: { onCreate: () => void }) {
   const pathname = usePathname();
+  const keyboardOpen = useKeyboardOpen();
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/90 pb-safe backdrop-blur-md md:hidden"
+      // Slide the bar out of the way while the keyboard is open so it never covers a focused input.
+      aria-hidden={keyboardOpen}
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/90 pb-safe backdrop-blur-md transition-transform duration-200 md:hidden",
+        keyboardOpen && "pointer-events-none translate-y-full",
+      )}
     >
       <div className="grid h-16 grid-cols-5 items-end">
         {NAV.map((item) => {
@@ -352,12 +359,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [createOpen, setCreateOpen] = useState(false);
   return (
     <div className="min-h-dvh bg-background">
+      <KeyboardListener />
       <Sidebar onCreate={() => setCreateOpen(true)} />
       <MobileTopBar />
       <main className="pb-24 md:pb-10 md:pl-64">
         <TermsAcceptanceBanner />
         <div className="mx-auto w-full max-w-[1100px] px-4 pt-5 sm:px-6 md:pt-10">{children}</div>
-        <Footer className="mt-10 bg-transparent" />
       </main>
       <MobileTabBar onCreate={() => setCreateOpen(true)} />
       <CreateDrawer open={createOpen} onOpenChange={setCreateOpen} />
