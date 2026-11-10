@@ -295,9 +295,13 @@ async function deleteAccount(req) {
     );
     await tx.query('DELETE FROM password_resets WHERE user_id = $1', [userId]);
     // AI context memory + chat history: the user row is anonymized (not deleted) so FK cascade
-    // won't fire — remove it explicitly. Deleting conversations cascades their messages.
-    await tx.query('DELETE FROM ai_user_facts WHERE user_id = $1', [userId]);
-    await tx.query('DELETE FROM ai_user_memory WHERE user_id = $1', [userId]);
+    // won't fire — remove it explicitly. Deleting conversations cascades their messages. The memory
+    // tables (migration 013) are removed only if present, so deletion stays safe on an environment
+    // where that migration has not been applied yet.
+    for (const table of ['ai_user_facts', 'ai_user_memory']) {
+      const { rows } = await tx.query('SELECT to_regclass($1) AS reg', [`public.${table}`]);
+      if (rows[0]?.reg) await tx.query(`DELETE FROM ${table} WHERE user_id = $1`, [userId]);
+    }
     await tx.query('DELETE FROM ai_conversations WHERE user_id = $1', [userId]);
     await tx.query('DELETE FROM pets WHERE user_id = $1', [userId]);
     await tx.query('DELETE FROM referral_codes WHERE user_id = $1', [userId]);
