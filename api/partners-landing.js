@@ -161,7 +161,7 @@ function render() {
       <a class="badge" href="${escapeHtml(env.appUrl)}/download/android" aria-label="Get it on Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.3 13 12l-9.4 9.7c-.4-.2-.6-.7-.6-1.2V3.5c0-.5.2-1 .6-1.2zm1.5-.3 11 6.3-2.6 2.7L5.1 2zm0 20 8.4-9 2.6 2.7-11 6.3zm12.5-7.2-3-3 3-3 3.3 1.9c1 .6 1 1.6 0 2.2l-3.3 1.9z"/></svg><span><small>Get it on</small>Google Play</span></a>
     </div>
   </section>
-  <footer>© ${new Date().getFullYear()} Pawtella · Toronto, Canada · Questions? <a href="mailto:${escapeHtml(env.adminEmail || 'partners@pawtella.app')}">Email us</a></footer>
+  <footer>© ${new Date().getFullYear()} Bone &amp; Biscuit College West (operating as Pawtella) · Toronto, Canada · Questions? <a href="mailto:${escapeHtml(env.adminEmail || 'partners@pawtella.app')}">Email us</a></footer>
 </div>
 </body>
 </html>`;

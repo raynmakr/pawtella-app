@@ -2,7 +2,7 @@
 
 **Effective Date:** [Effective Date] · **Version:** [Version 1.0]
 
-This Privacy Policy explains how **[Pawtella legal entity name]**, doing business as **Pawtella** (**"Pawtella," "we," "us"** or **"our"**), collects, uses, discloses and protects personal information when you use https://pawtella.com, our apps, online store, Toronto Depot, social feed, AI features, Paw Points and Subscribe & Save (the **"Services"**). It forms part of our Terms of Use (https://pawtella.com/terms). Capitalized terms not defined here have the meanings given in the Terms.
+This Privacy Policy explains how **Bone & Biscuit College West**, doing business as **Pawtella** (**"Pawtella," "we," "us"** or **"our"**), collects, uses, discloses and protects personal information when you use https://pawtella.com, our apps, online store, Toronto Depot, social feed, AI features, Paw Points and Subscribe & Save (the **"Services"**). It forms part of our Terms of Use (https://pawtella.com/terms). Capitalized terms not defined here have the meanings given in the Terms.
 
 We comply with Canada's *Personal Information Protection and Electronic Documents Act* (**PIPEDA**), and, where they apply, Quebec's *Act respecting the protection of personal information in the private sector* (as amended by **Law 25**) and US state privacy laws.
 
@@ -23,7 +23,7 @@ This summary is for convenience only. The full Policy below controls.
 
 ## 1. Who Is Responsible
 
-**[Pawtella legal entity name]** is responsible for personal information under its control, including information handled by our service providers on our behalf. We have designated a **Privacy Officer** who is accountable for our compliance with this Policy (see Section 16).
+**Bone & Biscuit College West** is responsible for personal information under its control, including information handled by our service providers on our behalf. We have designated a **Privacy Officer** who is accountable for our compliance with this Policy (see Section 16).
 
 ## 2. Information We Collect
 
@@ -223,7 +223,7 @@ If a breach of security safeguards involving personal information under our cont
 ## 16. Contact Our Privacy Officer
 
 **Privacy Officer:** [Privacy Officer name and title]
-**[Pawtella legal entity name]** (operating as Pawtella)
+**Bone & Biscuit College West** (operating as Pawtella)
 891 College St, Toronto, ON M6H 1A1, Canada
 Email: **[privacy@pawtella.com]** (general inquiries: hello@pawtella.com)
 

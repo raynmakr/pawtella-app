@@ -26,7 +26,7 @@ for (const name of TEMPLATE_NAMES) {
     assert.ok(out.html.includes('#FF6B4A'), 'coral accent');
     assert.ok(out.html.includes('prefers-color-scheme: dark'), 'dark mode styles');
     assert.ok(out.html.includes('unsubscribe'), 'unsubscribe link text');
-    assert.ok(out.html.includes('Pawtella, Toronto'), 'footer');
+    assert.ok(out.html.includes('Bone &amp; Biscuit College West (operating as Pawtella), Toronto'), 'footer');
     assert.ok(out.text.includes(FOOTER_TEXT), 'text footer');
     assert.ok(out.text.includes('unsubscribe'), 'text unsubscribe');
     assert.ok(!/undefined|\[object Object\]|NaN/.test(out.html), `leaked placeholders in ${name}`);

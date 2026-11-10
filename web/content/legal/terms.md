@@ -2,7 +2,7 @@
 
 **Effective Date:** [Effective Date] · **Version:** [Version 1.0]
 
-These Terms of Use (the **"Terms"**) are a legal agreement between you and **[Pawtella legal entity name]**, a corporation incorporated under the laws of [jurisdiction of incorporation] (corporation no. [corporation number]), doing business as **Pawtella** (**"Pawtella," "we," "us"** or **"our"**). They govern your use of the Pawtella website at https://pawtella.com, our mobile and web apps, our online store, our Toronto Depot, our social feed, our AI features, the Paw Points program, Subscribe & Save, and any related services (together, the **"Services"**).
+These Terms of Use (the **"Terms"**) are a legal agreement between you and **Bone & Biscuit College West**, a corporation incorporated under the laws of [jurisdiction of incorporation] (corporation no. [corporation number]), doing business as **Pawtella** (**"Pawtella," "we," "us"** or **"our"**). They govern your use of the Pawtella website at https://pawtella.com, our mobile and web apps, our online store, our Toronto Depot, our social feed, our AI features, the Paw Points program, Subscribe & Save, and any related services (together, the **"Services"**).
 
 > **PLEASE READ THESE TERMS CAREFULLY.** They limit our liability, require you to indemnify us in some situations, contain a release, and include an optional arbitration and class-action waiver (Section 26) that does not apply to consumers in Ontario or Quebec, or where the law prohibits it. **Nothing in these Terms takes away rights you have under consumer protection laws that cannot be waived.**
 
@@ -352,7 +352,7 @@ To the extent permitted by law, any claim arising out of or relating to these Te
 
 ## 30. Contact Us
 
-**[Pawtella legal entity name]** (operating as Pawtella)
+**Bone & Biscuit College West** (operating as Pawtella)
 Toronto Depot: 891 College St, Toronto, ON M6H 1A1, Canada
 Email: **hello@pawtella.com**
 Phone: [phone number]
