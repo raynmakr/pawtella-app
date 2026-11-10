@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Mascot } from "./mascot";
 
 /** Paw-print mark drawn inline. Inherits `currentColor` unless `className` sets a text color. */
 export function PawIcon({ className, ...props }: React.ComponentProps<"svg">) {
@@ -16,30 +17,29 @@ export function PawIcon({ className, ...props }: React.ComponentProps<"svg">) {
 interface LogoProps extends React.ComponentProps<"span"> {
   /** Height of the mark; the wordmark scales with it. */
   size?: "sm" | "md" | "lg" | "xl";
-  /** Hide the wordmark and show only the paw. */
+  /** Hide the wordmark and show only Pip's head mark. */
   markOnly?: boolean;
+  /** Idle blink / ear twitch on the mark. Default true; always honours reduced motion. */
+  animate?: boolean;
 }
 
 const sizes = {
-  sm: { mark: "size-7 rounded-lg", icon: "size-4", text: "text-lg" },
-  md: { mark: "size-9 rounded-xl", icon: "size-5", text: "text-2xl" },
-  lg: { mark: "size-12 rounded-2xl", icon: "size-7", text: "text-3xl" },
-  xl: { mark: "size-16 rounded-3xl", icon: "size-9", text: "text-5xl" },
+  sm: { mark: "w-8", text: "text-lg", gap: "gap-2" },
+  md: { mark: "w-10", text: "text-2xl", gap: "gap-2.5" },
+  lg: { mark: "w-14", text: "text-3xl", gap: "gap-3" },
+  xl: { mark: "w-20", text: "text-5xl", gap: "gap-3.5" },
 };
 
-/** Pawtella wordmark: coral rounded tile with a paw + "Pawtella" in the display face. */
-export function Logo({ size = "md", markOnly = false, className, ...props }: LogoProps) {
+/** Pawtella lockup: Pip's head mark + "Pawtella" in the display face. */
+export function Logo({ size = "md", markOnly = false, animate = true, className, ...props }: LogoProps) {
   const s = sizes[size];
   return (
-    <span className={cn("inline-flex items-center gap-2.5 select-none", className)} {...props}>
-      <span
-        className={cn(
-          "inline-flex items-center justify-center bg-primary text-primary-foreground shadow-[0_6px_16px_-6px_var(--primary)]",
-          s.mark,
-        )}
-      >
-        <PawIcon className={s.icon} />
-      </span>
+    <span className={cn("inline-flex items-center select-none", s.gap, className)} {...props}>
+      <Mascot
+        variant="mark"
+        animate={animate}
+        className={cn("shrink-0 drop-shadow-[0_4px_10px_rgba(255,107,74,0.30)]", s.mark)}
+      />
       {!markOnly && (
         <span className={cn("font-heading font-extrabold tracking-tight text-foreground", s.text)}>
           Paw<span className="text-primary">tella</span>

@@ -201,3 +201,51 @@
   100% { transform: scale(1); opacity: 1; }
 }
 .animate-pop-in { animation: pop-in 600ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+
+/* ------------------------------------------------------------------------------------------
+   Pip, the Pawtella mascot — idle life. Each moving part keeps its own transform-origin so
+   the SVG never reflows. All motion is removed under prefers-reduced-motion (see bottom).
+   ------------------------------------------------------------------------------------------ */
+.pip-eyes, .pip-ear, .pip-tail, .pip-wave, .pip-cheer, .pip-dots > *, .pip-sparkle > * {
+  transform-box: fill-box;
+  will-change: transform;
+}
+.pip-eyes { transform-origin: center; animation: pip-blink 5.4s ease-in-out infinite; }
+.pip-ear { transform-origin: 70% 90%; animation: pip-ear 6.5s ease-in-out infinite; }
+.pip-tail { transform-origin: 90% 95%; animation: pip-tail 2.9s ease-in-out infinite; }
+.pip-wave { transform-origin: 80% 95%; animation: pip-wave 2.4s ease-in-out infinite; }
+.pip-cheer { transform-origin: center 95%; animation: pip-cheer 1.8s ease-in-out infinite; }
+.pip-float { animation: pip-float 3.6s ease-in-out infinite; }
+.pip-dots > * { animation: pip-dot 1.3s ease-in-out infinite; }
+.pip-dots > *:nth-child(1) { animation-delay: 0s; }
+.pip-dots > *:nth-child(2) { animation-delay: 0.16s; }
+.pip-dots > *:nth-child(3) { animation-delay: 0.32s; }
+.pip-sparkle > * { transform-origin: center; animation: pip-twinkle 1.9s ease-in-out infinite; }
+.pip-sparkle > *:nth-child(2) { animation-delay: 0.5s; }
+.pip-sparkle > *:nth-child(3) { animation-delay: 1s; }
+
+@keyframes pip-blink { 0%, 90%, 100% { transform: scaleY(1); } 93%, 95% { transform: scaleY(0.12); } }
+@keyframes pip-ear { 0%, 86%, 100% { transform: rotate(0deg); } 90% { transform: rotate(-8deg); } 95% { transform: rotate(4deg); } }
+@keyframes pip-tail { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(8deg); } }
+@keyframes pip-wave { 0%, 100% { transform: rotate(6deg); } 25% { transform: rotate(-12deg); } 50% { transform: rotate(10deg); } 75% { transform: rotate(-8deg); } }
+@keyframes pip-cheer { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-5px) rotate(2deg); } }
+@keyframes pip-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes pip-dot { 0%, 100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(-4px); opacity: 1; } }
+@keyframes pip-twinkle { 0%, 100% { transform: scale(0.7); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 1; } }
+
+/* ------------------------------------------------------------------------------------------
+   Shared entrance + feedback motion. Content is visible by default (no FOUC) and these only
+   add movement; the reduced-motion block below neutralises every transform-based animation.
+   ------------------------------------------------------------------------------------------ */
+@keyframes rise-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.animate-rise-in { animation: rise-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in { animation: fade-in 0.4s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pip-eyes, .pip-ear, .pip-tail, .pip-wave, .pip-cheer, .pip-float,
+  .pip-dots > *, .pip-sparkle > *, .animate-pop-in, .animate-rise-in, .animate-fade-in, .confetti-piece {
+    animation: none !important;
+  }
+  .animate-rise-in, .animate-fade-in { opacity: 1 !important; transform: none !important; }
+}
