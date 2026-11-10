@@ -30,6 +30,8 @@ Privacy (Canada / PIPEDA): payment data and passwords are never stored (the prom
 
 Video is asynchronous: `POST /api/ai/generate` charges points and starts the job; the app polls `GET /api/ai/generate/:id`; `api/cron/finalize-generations.js` finishes jobs the client stopped polling and refunds failures. Provider URLs are temporary, so finished media is copied into Neon Object Storage (`media.storeFromUrl`): images become sized WebP, videos are transcoded to MP4 with a poster frame used as the thumbnail. `watermarked_url` now equals the processed output URL (no dynamic overlay CDN).
 
+**xAI Zero Data Retention.** The xAI team has ZDR enabled, so xAI hosts no outputs. Videos: `createGeneration` presigns a PUT URL in our storage (`media.presignProviderVideoUpload`, 2 h expiry, host-only signature) and sends it as `output.upload_url`; its public URL is kept in `provider_output_url`, and on `done` `pollGeneration` processes that object (`media.storeFromKey`: poster + final copy, raw upload deleted). Without `output.upload_url` xAI rejects the job with "Zero Data Retention teams must provide output.upload_url for video generation." Images: requested as `response_format: 'b64_json'` and stored with `media.storeBuffer`.
+
 ## Paw Points math (`lib/points-rules.js`)
 
 - 1 PP = **$0.05** of value, everywhere.
