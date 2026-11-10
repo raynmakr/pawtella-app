@@ -1,6 +1,6 @@
 # Pawtella Privacy Policy
 
-**Effective Date:** [Effective Date] · **Version:** [Version 1.0]
+**Effective Date:** November 10, 2026 · **Version:** 1.0
 
 This Privacy Policy explains how **Bone & Biscuit College West**, doing business as **Pawtella** (**"Pawtella," "we," "us"** or **"our"**), collects, uses, discloses and protects personal information when you use https://pawtella.com, our apps, online store, Toronto Depot, social feed, AI features, Paw Points and Subscribe & Save (the **"Services"**). It forms part of our Terms of Use (https://pawtella.com/terms). Capitalized terms not defined here have the meanings given in the Terms.
 
@@ -108,14 +108,17 @@ When you upload photos, **we automatically remove EXIF metadata, including GPS l
 
 | Provider | Purpose | Location of processing |
 |---|---|---|
-| **Shopify** | E-commerce platform, checkout, orders, customer records, payment processing (with its payment partners) | Canada, United States and other countries where Shopify operates |
-| **Vercel** | Website and app hosting, serverless functions, content delivery | United States and global edge network |
-| **Neon** | Database (accounts, pet profiles, posts, AI Memory) and object storage (photos and videos) | **United States (AWS us-east-1, Virginia)** |
-| **Resend** | Sending transactional and marketing emails | United States |
-| **Anthropic** | AI models for the AI pet assistant | United States |
-| **xAI** [xAI — confirm if used] | AI models for AI-generated pet images and videos | United States |
-| [Analytics provider(s)] | Site and app analytics | [location] |
+| **Shopify** (Shopify Inc., Canada) | E-commerce platform, checkout, orders, customer records, payment processing (with its payment partners) | Canada, United States and other countries where Shopify operates |
+| **Vercel** (Vercel, Inc., USA) | Website and app hosting, serverless functions, content delivery | United States and global edge network |
+| **Neon** (Neon, Inc., USA) | Database (accounts, pet profiles, posts, AI Memory) and object storage (photos and videos) | **United States (AWS us-east-1, Virginia)** |
+| **Resend** (Resend, Inc., USA) | Sending account, order and transactional emails (and marketing emails where you consent), and operating our support inboxes (hello@, support@ and privacy@pawtella.com) so we can receive and reply to your messages. Personal information involved: your name, email address and the content of your messages | United States |
+| **Anthropic** (Anthropic, PBC, USA) | AI models for the AI pet assistant | United States |
+| **xAI** (X.AI LLC, USA) | AI models for AI-generated pet images and videos | United States |
+| **Apple** (Apple Inc., USA) | "Sign in with Apple" identity verification when you choose that sign-in method | United States |
+| **Google** (Google LLC, USA) | "Sign in with Google" identity verification when you choose that sign-in method | United States |
 | Shipping carriers and delivery partners | Delivering your orders | Canada and United States |
+
+We do **not** currently use a third-party analytics provider, and we do **not** serve advertising or use advertising or social-media pixels. If we add one in the future, we will update this list and, where the technology is not strictly necessary, enable it only with your consent (Section 7).
 
 **6.2 AI providers.** Anthropic, and xAI where used, receive the prompts, conversation context, relevant AI Memory and uploaded media needed to generate a response. They act as our processors. Under their business terms, they may keep inputs and outputs for a limited period (for example for trust-and-safety monitoring) and then delete them. They are not permitted to use your data to train their models.
 
@@ -133,8 +136,8 @@ When you upload photos, **we automatically remove EXIF metadata, including GPS l
 
 - **Strictly necessary:** sign-in, security, shopping cart and checkout, and load balancing. These are always on.
 - **Preferences:** remembering your settings and language.
-- **Analytics:** understanding how the Services are used and improving them, through [Analytics provider(s)].
-- **Advertising (if used):** measuring the effectiveness of our ads, through [Advertising / pixel partners, if any].
+- **Analytics:** we do **not** currently use a third-party analytics provider. If we add one, we will update this Policy and enable analytics cookies only with your consent.
+- **Advertising:** we do **not** currently serve advertising or use advertising or social-media pixels. If this changes, we will update this Policy and enable any such technology only with your consent.
 
 **7.2 Your choices.** **Non-essential cookies (analytics and advertising) are turned off until you consent** through our cookie banner. You can change your choices at any time through "Cookie settings" in the site footer, and you can also block or delete cookies in your browser. Some features may not work without necessary cookies. **We honour Global Privacy Control (GPC) signals** as a request to opt out of targeted advertising and of any "sale" or "sharing" as those terms are defined under US state laws. Our Services do not currently respond to "Do Not Track" signals, because no industry standard exists for them.
 
@@ -144,7 +147,7 @@ We send **commercial electronic messages** (such as promotions, new products and
 
 ## 9. International Transfers and Storage Outside Canada
 
-Pawtella is based in Toronto, Ontario, but **most of our service providers store and process personal information outside Canada, mainly in the United States**. This includes our database and media storage on Neon in AWS **us-east-1 (Virginia)**, hosting on Vercel, email through Resend, AI processing by Anthropic (and xAI where used), and parts of Shopify's platform. While your information is outside Canada, it is subject to the laws of those countries, and **courts, law enforcement and national security authorities there may be able to access it** under their laws. We use contracts and other measures to protect personal information while our service providers process it. Before sending personal information of Quebec residents outside Quebec, we assess whether it will receive adequate protection, as Quebec law requires. You may contact our Privacy Officer for more information about our service providers outside Canada.
+Pawtella is based in Toronto, Ontario, but **most of our service providers store and process personal information outside Canada, mainly in the United States**. This includes our database and media storage on Neon in AWS **us-east-1 (Virginia)**, hosting on Vercel, outbound email and our support inboxes through Resend, AI processing by Anthropic and xAI, identity verification through Apple and Google when you use those sign-in methods, and parts of Shopify's platform. While your information is outside Canada, it is subject to the laws of those countries, and **courts, law enforcement and national security authorities there may be able to access it** under their laws. We use contracts and other measures to protect personal information while our service providers process it. Before sending personal information of Quebec residents outside Quebec, we assess whether it will receive adequate protection, as Quebec law requires. You may contact our Privacy Officer for more information about our service providers outside Canada.
 
 ## 10. How Long We Keep Information
 
@@ -200,7 +203,7 @@ If a breach of security safeguards involving personal information under our cont
 - **Transfers outside Quebec.** We assess privacy risks before transferring personal information outside Quebec (Section 9).
 - **Automated decisions.** See Section 3.8.
 - **Rights.** You have the rights of access, correction, data portability, withdrawal of consent, and **de-indexation or cessation of dissemination** where the law provides. You can make a request as described in Section 13.2.
-- **Language.** This Policy is available in French. *Cette politique est disponible en français sur demande à [privacy@pawtella.com].*
+- **Language.** This Policy is available in French at https://pawtella.com/fr/privacy. *Cette politique est disponible en français à l'adresse https://pawtella.com/fr/privacy.*
 
 **14.3 Other provinces.** Where Alberta's or British Columbia's *Personal Information Protection Act* applies, we handle personal information in line with those laws as well.
 
@@ -239,4 +242,4 @@ The Services may link to or integrate with third-party websites and services, su
 
 We may update this Policy from time to time. We will post the updated version with a new Effective Date. **If we make material changes**, we will notify you by email and/or in the Services **at least 30 days before they take effect**, consistent with Section 2 of the Terms. Where the change involves a new purpose for using your personal information, or the law otherwise requires, **we will ask for your consent**. Previous versions are available on request.
 
-*Last updated: [Effective Date] · [Version 1.0]*
+*Last updated: November 10, 2026 · Version 1.0*
