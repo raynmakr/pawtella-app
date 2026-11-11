@@ -314,6 +314,30 @@ export function SettingsScreen() {
                     Français
                   </Link>
                 </span>
+                <span className="inline-flex items-center gap-2">
+                  <Link href="/shipping" className="text-foreground/80 hover:text-primary hover:underline">
+                    Shipping Policy
+                  </Link>
+                  <Link
+                    href="/fr/shipping"
+                    hrefLang="fr-CA"
+                    className="text-xs text-muted-foreground hover:text-primary hover:underline"
+                  >
+                    Français
+                  </Link>
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Link href="/returns" className="text-foreground/80 hover:text-primary hover:underline">
+                    Returns &amp; Refunds
+                  </Link>
+                  <Link
+                    href="/fr/returns"
+                    hrefLang="fr-CA"
+                    className="text-xs text-muted-foreground hover:text-primary hover:underline"
+                  >
+                    Français
+                  </Link>
+                </span>
               </nav>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 © 2026 Bone &amp; Biscuit College West (operating as Pawtella) · Toronto, Canada

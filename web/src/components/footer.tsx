@@ -15,6 +15,12 @@ export function Footer({ className }: { className?: string }) {
           <Link href="/privacy" className="hover:text-primary hover:underline">
             Privacy Policy
           </Link>
+          <Link href="/shipping" className="hover:text-primary hover:underline">
+            Shipping
+          </Link>
+          <Link href="/returns" className="hover:text-primary hover:underline">
+            Returns &amp; Refunds
+          </Link>
         </nav>
       </div>
     </footer>

@@ -41,12 +41,16 @@ const components: Components = {
  * The companion-language route for each legal document, so the language toggle can link the
  * English and French versions of the same page to each other.
  */
-const ALT_HREF: Record<"terms" | "privacy", { en: string; fr: string }> = {
+type LegalSlug = "terms" | "privacy" | "shipping" | "returns";
+
+const ALT_HREF: Record<LegalSlug, { en: string; fr: string }> = {
   terms: { en: "/terms", fr: "/fr/terms" },
   privacy: { en: "/privacy", fr: "/fr/privacy" },
+  shipping: { en: "/shipping", fr: "/fr/shipping" },
+  returns: { en: "/returns", fr: "/fr/returns" },
 };
 
-export function LegalDoc({ doc, slug }: { doc: LoadedLegalDoc; slug: "terms" | "privacy" }) {
+export function LegalDoc({ doc, slug }: { doc: LoadedLegalDoc; slug: LegalSlug }) {
   const isFr = doc.locale === "fr";
   const hrefs = ALT_HREF[slug];
   const onPage = isFr ? "Dans cette page" : "On this page";

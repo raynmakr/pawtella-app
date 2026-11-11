@@ -9,7 +9,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 // English source docs plus their Canadian French (fr-CA) counterparts (<doc>.fr.md), bundled under
 // the key "<doc>.fr" so the French legal routes can render them without runtime fs access.
-const docs = ["terms", "privacy"];
+const docs = ["terms", "privacy", "shipping", "returns"];
 const keys = [...docs, ...docs.map((d) => `${d}.fr`)];
 
 const entries = keys

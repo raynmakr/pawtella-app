@@ -5,7 +5,7 @@ import { LEGAL_CONTENT } from "./legal-content";
 export const TERMS_VERSION = "1.0";
 export const PRIVACY_VERSION = "1.0";
 
-export type LegalDocId = "terms" | "privacy";
+export type LegalDocId = "terms" | "privacy" | "shipping" | "returns";
 export type LegalLocale = "en" | "fr";
 
 export interface TocItem {
@@ -21,8 +21,18 @@ export interface LoadedLegalDoc {
 }
 
 const FALLBACK_TITLE: Record<LegalLocale, Record<LegalDocId, string>> = {
-  en: { terms: "Terms of Use", privacy: "Privacy Policy" },
-  fr: { terms: "Conditions d'utilisation", privacy: "Politique de confidentialité" },
+  en: {
+    terms: "Terms of Use",
+    privacy: "Privacy Policy",
+    shipping: "Shipping Policy",
+    returns: "Returns & Refunds Policy",
+  },
+  fr: {
+    terms: "Conditions d'utilisation",
+    privacy: "Politique de confidentialité",
+    shipping: "Politique d'expédition",
+    returns: "Politique de retour et de remboursement",
+  },
 };
 
 /**
