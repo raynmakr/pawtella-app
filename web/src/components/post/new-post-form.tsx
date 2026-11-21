@@ -114,7 +114,7 @@ function NewPostInner() {
       if (user) void qc.invalidateQueries({ queryKey: queryKeys.users.posts(user.handle) });
       const session = await refresh();
       if (!hadFirstPost && session.user?.bonuses.firstPost) {
-        toast.success("+5 Paw Points for your first post!", { description: "Spend them in the Studio or at checkout." });
+        toast.success("+5 Paw Points for your first post!", { description: "Spend them at checkout." });
       } else {
         toast.success(challengeId !== NONE ? "Posted and entered in the challenge!" : "Posted!");
       }

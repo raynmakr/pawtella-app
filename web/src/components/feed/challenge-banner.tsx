@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { SparklesIcon, TrophyIcon } from "lucide-react";
+import { CameraIcon, TrophyIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChallenges } from "@/hooks/use-challenges";
-import { daysLeft, studioHref } from "@/components/challenges/challenge-utils";
+import { daysLeft, postHref } from "@/components/challenges/challenge-utils";
 import { isOptimizableImage } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
@@ -40,9 +40,9 @@ export function ChallengeBanner({ className }: { className?: string }) {
           <Button
             variant="points"
             nativeButton={false}
-            render={<Link href={studioHref(ch)} />}
+            render={<Link href={postHref(ch)} />}
           >
-            <SparklesIcon data-icon="inline-start" /> Enter
+            <CameraIcon data-icon="inline-start" /> Post your entry
           </Button>
           <Button
             variant="outline"

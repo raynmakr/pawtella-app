@@ -9,7 +9,7 @@ export default function RegisterPage() {
   return (
     <AuthCard
       title="Create your account"
-      description="You'll start with 30 Paw Points to spend in the AI Studio or the shop."
+      description="You'll start with 30 Paw Points to spend in the shop."
       footer={
         <>
           Already have an account?{" "}

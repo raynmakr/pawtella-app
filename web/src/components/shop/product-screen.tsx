@@ -202,7 +202,7 @@ export function ProductScreen({ handle }: { handle: string }) {
               </span>
               <div>
                 <p className="font-semibold">{formatPoints(product.pawPointsPack * quantity)} Paw Points, added right after payment</p>
-                <p className="mt-0.5 text-muted-foreground">Digital pack, nothing to ship. Spend them in the AI Studio or at checkout (1 PP = $0.05).</p>
+                <p className="mt-0.5 text-muted-foreground">Digital pack, nothing to ship. Spend them at checkout or in the Studio (1 PP = $0.05).</p>
               </div>
             </div>
           ) : (

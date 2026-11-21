@@ -108,7 +108,7 @@ export function AddPetFlow() {
           You&apos;ve got <span className="text-points-foreground dark:text-points">{formatPoints(done.points)} Paw Points</span>
         </h1>
         <p className="mt-3 max-w-sm text-balance text-muted-foreground">
-          Spend them in the AI Studio or at checkout. Earn more by posting, inviting friends and shopping.
+          Spend them at checkout. Earn more by posting photos, inviting friends and shopping.
         </p>
         <Button size="xl" className="mt-10 w-full max-w-xs" onClick={onContinue} disabled={pending}>
           {pending ? <Loader2Icon data-icon="inline-start" className="animate-spin" /> : <SparklesIcon data-icon="inline-start" />}
@@ -146,7 +146,7 @@ export function AddPetFlow() {
             </button>
             <div>
               <p className="font-heading font-bold">Photo</p>
-              <p className="text-sm text-muted-foreground">Optional, but it makes the AI Studio much more fun.</p>
+              <p className="text-sm text-muted-foreground">Optional, but it puts a face to the name on their profile.</p>
               <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => fileRef.current?.click()}>
                 {photo ? "Change photo" : "Choose photo"}
               </Button>

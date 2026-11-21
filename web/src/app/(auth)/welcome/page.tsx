@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
-import { HeartPulseIcon, ShoppingBagIcon, SparklesIcon } from "lucide-react";
+import { CameraIcon, HeartPulseIcon, ShoppingBagIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { Mascot } from "@/components/mascot";
@@ -11,7 +11,7 @@ import { ReferralCapture } from "@/components/auth/referral-capture";
 export const metadata: Metadata = { title: "Welcome" };
 
 const VALUE_PROPS = [
-  { icon: SparklesIcon, title: "Create AI videos of your pet", body: "Turn a photo into a playful clip and share it with the pack.", tone: "bg-coral-soft text-primary" },
+  { icon: CameraIcon, title: "Share your pet's best moments", body: "Post photos and videos, join weekly challenges and cheer on the pack.", tone: "bg-coral-soft text-primary" },
   { icon: HeartPulseIcon, title: "Ask anything about their health and habits", body: "A friendly assistant that knows your pet and when to call the vet.", tone: "bg-teal-soft text-secondary" },
   { icon: ShoppingBagIcon, title: "Shop supplies with pickup in Toronto or delivery", body: "Food, toys and treats. Earn Paw Points on every order.", tone: "bg-accent text-points-foreground dark:text-points" },
 ];

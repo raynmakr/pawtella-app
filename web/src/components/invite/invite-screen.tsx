@@ -15,7 +15,7 @@ import { formatPoints } from "@/lib/format";
 const STEPS: Array<{ Icon: LucideIcon; title: string; body: string }> = [
   { Icon: Share2Icon, title: "Share your link", body: "Send it to a friend with a pet (or post it anywhere)." },
   { Icon: UserPlusIcon, title: "They join with +10 PP", body: "Your friend signs up through your link and gets 10 bonus Paw Points." },
-  { Icon: SparklesIcon, title: "You get +20 PP", body: "When they make their first Studio creation or place their first order, 20 Paw Points land in your balance." },
+  { Icon: SparklesIcon, title: "You get +20 PP", body: "When they make their first post or place their first order, 20 Paw Points land in your balance." },
 ];
 
 export function InviteScreen() {
@@ -29,7 +29,7 @@ export function InviteScreen() {
     if (!link) return;
     void shareUrl({
       title: "Join me on Pawtella",
-      text: `Pawtella makes AI videos of your pet, answers pet questions and delivers supplies in Toronto. Use my code ${code} for 10 bonus Paw Points.`,
+      text: `Pawtella is where pet people share photos and videos, get answers to pet questions and shop supplies in Toronto. Use my code ${code} for 10 bonus Paw Points.`,
       url: link,
     });
   };

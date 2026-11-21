@@ -12,10 +12,10 @@ const THEMES = [
     preset_id: 'watercolor',
   },
   {
-    slug: 'zoomies-in-space',
-    title: 'Zoomies in Space',
-    description: 'Launch your pet into orbit. Astronaut suits strongly encouraged.',
-    preset_id: 'astronaut',
+    slug: 'best-zoomies',
+    title: 'Best Zoomies',
+    description: 'Catch the chaos. Your best action shot or clip of a full-speed zoomie.',
+    preset_id: null,
   },
   {
     slug: 'halloween-costume-reveal',

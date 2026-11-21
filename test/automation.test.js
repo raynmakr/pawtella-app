@@ -81,9 +81,13 @@ test('welcome_d1 / welcome_d3 / first_creation_nudge select by signup age', asyn
   await signupEvent(d1, hoursAgo(30));
   const d3 = await makeUser();
   await signupEvent(d3, hoursAgo(80));
-  const withGen = await makeUser();
-  await signupEvent(withGen, hoursAgo(80));
-  await query(`INSERT INTO ai_generations (user_id, kind, model, prompt, status) VALUES ($1, 'image', 'm', 'p', 'done')`, [withGen]);
+  const withPost = await makeUser();
+  await signupEvent(withPost, hoursAgo(80));
+  await query(`INSERT INTO posts (user_id, media_url, media_type) VALUES ($1, 'https://example.com/a.jpg', 'image')`, [withPost]);
+  // A Studio creation alone no longer counts: the nudge is about posting a real photo.
+  const withGenOnly = await makeUser();
+  await signupEvent(withGenOnly, hoursAgo(80));
+  await query(`INSERT INTO ai_generations (user_id, kind, model, prompt, status) VALUES ($1, 'image', 'm', 'p', 'done')`, [withGenOnly]);
 
   await runAutomations(NOW, { only: ['welcome_d0', 'welcome_d1', 'welcome_d3', 'first_creation_nudge'], deliver: false });
 
@@ -92,9 +96,10 @@ test('welcome_d1 / welcome_d3 / first_creation_nudge select by signup age', asyn
   assert.equal((await rowsFor(d1, 'first_creation_nudge')).length, 0, 'd1 user is under 48h');
 
   assert.equal((await rowsFor(d3, 'welcome_d3')).length, 2);
-  assert.equal((await rowsFor(d3, 'first_creation_nudge')).length, 2, 'no generation after 48h → nudge');
-  assert.equal((await rowsFor(withGen, 'first_creation_nudge')).length, 0, 'has a generation → no nudge');
-  assert.equal((await rowsFor(withGen, 'welcome_d3')).length, 2);
+  assert.equal((await rowsFor(d3, 'first_creation_nudge')).length, 2, 'no post after 48h → nudge');
+  assert.equal((await rowsFor(withPost, 'first_creation_nudge')).length, 0, 'has a post → no nudge');
+  assert.equal((await rowsFor(withPost, 'welcome_d3')).length, 2);
+  assert.equal((await rowsFor(withGenOnly, 'first_creation_nudge')).length, 2, 'a Studio creation alone still gets the post nudge');
 });
 
 test('pet_birthday: awards petBirthdayBonus exactly once even when run twice', async () => {
