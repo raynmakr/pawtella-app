@@ -19,6 +19,7 @@ import type { ShopAssistResponse } from "@/types/shop";
 import { CartButton } from "./cart-button";
 import { FulfillmentBanner } from "./fulfillment";
 import { ProductCard } from "./product-card";
+import { PawTrail, SearchSweep, SniffingOut } from "./search-progress";
 
 function useDebounced<T>(value: T, ms: number) {
   const [v, setV] = useState(value);
@@ -49,7 +50,7 @@ export function ShopScreen() {
   const [collection, setCollection] = useState(params.get("collection") ?? "");
   const [input, setInput] = useState(params.get("q") ?? "");
   const [assist, setAssist] = useState<ShopAssistResponse | null>(null);
-  const q = useDebounced(input.trim(), 350);
+  const q = useDebounced(input.trim(), 250);
   // Questions wait a little longer so we don't call the assistant on every pause in typing.
   const settled = useDebounced(input.trim(), 900);
   const latestQuestion = useRef("");
@@ -68,6 +69,9 @@ export function ShopScreen() {
   const collections = useCollections();
   const products = useProducts({ collection: collection || undefined, q: q || undefined }, true);
   const items = useMemo(() => products.data?.pages.flatMap((p) => p.products) ?? [], [products.data]);
+  // Searching from the first keystroke (before the debounce fires) until the new results land.
+  // Old results stay on screen meanwhile (keepPreviousData), dimmed.
+  const searching = input.trim() !== q || products.isPlaceholderData || products.isLoading;
 
   const ask = useMutation({
     mutationFn: (message: string) => shopService.assist(message, primaryPet?.id),
@@ -106,6 +110,7 @@ export function ShopScreen() {
     ask.reset();
   };
 
+  const busy = searching || ask.isPending;
   const showAssist = Boolean(activeQuestion) && Boolean(assist || ask.isPending || ask.isError);
   const petName = primaryPet?.name ?? "your pet";
 
@@ -132,7 +137,9 @@ export function ShopScreen() {
       >
         <label className="relative block">
           <span className="sr-only">Search products or describe what you need</span>
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2 text-muted-foreground" />
+          <span className="pointer-events-none absolute top-1/2 left-3.5 flex w-5 -translate-y-1/2 justify-center">
+            {busy && input.trim() ? <PawTrail className="-ml-1.5" /> : <SearchIcon className="size-4.5 text-muted-foreground" />}
+          </span>
           <input
             type="search"
             value={input}
@@ -141,6 +148,10 @@ export function ShopScreen() {
             placeholder={`Search, or describe what ${petName} needs`}
             className="h-12 w-full rounded-full bg-card pr-11 pl-11 text-base ring-1 ring-border transition outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:text-[15px] [&::-webkit-search-cancel-button]:appearance-none"
           />
+          <SearchSweep active={busy && Boolean(input.trim())} />
+          <span className="sr-only" role="status" aria-live="polite">
+            {busy && input.trim() ? "Searching" : ""}
+          </span>
           {input && (
             <button
               type="button"
@@ -219,8 +230,11 @@ export function ShopScreen() {
       </div>
 
       {/* Grid */}
-      {products.isLoading ? (
-        <ListSkeleton variant="tile" rows={8} className="lg:grid-cols-4" />
+      {products.isLoading || (searching && items.length === 0 && input.trim()) ? (
+        <>
+          {input.trim() && <SniffingOut query={input.trim()} />}
+          <ListSkeleton variant="tile" rows={8} className="lg:grid-cols-4" />
+        </>
       ) : products.isError ? (
         <ErrorState title="Couldn't load products" error={products.error} onRetry={() => void products.refetch()} retrying={products.isRefetching} />
       ) : items.length === 0 ? (
@@ -242,7 +256,10 @@ export function ShopScreen() {
         )
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div
+            className={cn("grid grid-cols-2 gap-3 transition-opacity duration-200 sm:grid-cols-3 lg:grid-cols-4", searching && "opacity-55")}
+            aria-busy={searching}
+          >
             {items.map((p, i) => (
               <Reveal key={p.id} delay={Math.min(i, 8) * 0.04} className="h-full">
                 <ProductCard product={p} className="h-full" />

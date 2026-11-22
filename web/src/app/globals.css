@@ -249,7 +249,21 @@
 @keyframes pop { 0% { transform: scale(1); } 35% { transform: scale(1.35); } 100% { transform: scale(1); } }
 .animate-pop { animation: pop 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
 
+/* Shop search: paw prints step in turn, and a coral sweep runs along the field. */
+.paw-trail > * { animation: paw-step 1.1s ease-in-out infinite; opacity: 0.2; }
+.paw-trail > *:nth-child(2) { animation-delay: 0.18s; }
+.paw-trail > *:nth-child(3) { animation-delay: 0.36s; }
+@keyframes paw-step {
+  0%, 100% { opacity: 0.2; transform: scale(0.8) var(--paw-tilt, rotate(0)); }
+  35% { opacity: 1; transform: scale(1.05) var(--paw-tilt, rotate(0)); }
+}
+.paw-trail > *:nth-child(odd) { --paw-tilt: rotate(-12deg); }
+.paw-trail > *:nth-child(2) { --paw-tilt: translateY(-3px) rotate(12deg); }
+.search-sweep { animation: search-sweep 1.1s ease-in-out infinite; }
+@keyframes search-sweep { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+
 @media (prefers-reduced-motion: reduce) {
+  .paw-trail > *, .search-sweep { animation: none !important; opacity: 1 !important; }
   .pip-eyes, .pip-ear, .pip-tail, .pip-wave, .pip-cheer, .pip-float,
   .pip-dots > *, .pip-sparkle > *, .animate-pop-in, .animate-rise-in, .animate-fade-in,
   .animate-page-in, .animate-pop, .confetti-piece {
