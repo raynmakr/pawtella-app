@@ -96,7 +96,7 @@ export function PointsScreen() {
       <PageHeader
         eyebrow="Rewards"
         title="Paw Points"
-        description="Earn by posting, inviting friends and shopping. Spend in the Studio or at checkout."
+        description="Earn by posting, inviting friends and shopping. Spend at checkout or on Studio extras."
         actions={
           <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/points/history" />}>
             <HistoryIcon data-icon="inline-start" /> History
@@ -175,7 +175,7 @@ export function PointsScreen() {
       {/* Buy packs */}
       <section id="buy" className="mt-8 scroll-mt-24">
         <h2 className="mb-1 text-xl">Buy Paw Points</h2>
-        <p className="mb-3 text-sm text-muted-foreground">Top up for the Studio. Packs land in your balance as soon as the order is paid.</p>
+        <p className="mb-3 text-sm text-muted-foreground">Top up your balance. Packs land in your balance as soon as the order is paid.</p>
         <div className="grid gap-3 sm:grid-cols-3">
           {packs.map((p, i) => {
             const perPoint = p.priceCents / p.points;
@@ -205,7 +205,7 @@ export function PointsScreen() {
           <InfoIcon className="size-4 text-primary" /> How Paw Points work
         </h2>
         <ul className="grid gap-1.5 text-sm text-muted-foreground sm:grid-cols-2">
-          <li>1 Paw Point is worth {formatCents(valueCents)} in the store and the Studio.</li>
+          <li>1 Paw Point is worth {formatCents(valueCents)} in the store.</li>
           <li>Redeem at least {rules?.minRedeem ?? 20} PP per order, up to {rules?.maxRedeemPercent ?? 50}% of the subtotal.</li>
           <li>Earn 1 PP per $1 spent on store orders.</li>
           <li>

@@ -244,3 +244,26 @@ test('createPost validates challenge window', async () => {
   const feed = await listFeed({ mode: 'challenge', challengeId: active.id });
   assert.deepEqual(feed.posts.map((x) => x.id), [p.id]);
 });
+
+test('discover ranks real photos above equally fresh, equally liked Studio creations', async () => {
+  const u = await makeUser();
+  const real = await createPost(u.id, { mediaUrl: 'https://placedog.net/600/600?id=1', mediaType: 'image', caption: 'real nap' });
+  const gen = await one(
+    `INSERT INTO ai_generations (user_id, kind, model, prompt, status) VALUES ($1, 'image', 'test', 'astronaut', 'done') RETURNING id`,
+    [u.id],
+  );
+  const studio = await createPost(u.id, { mediaUrl: 'https://placedog.net/600/600?id=2', mediaType: 'image', generationId: gen.id, caption: 'studio' });
+  // Same age and likes, so only the Studio weight separates them.
+  await one(`UPDATE posts SET created_at = now() - interval '1 hour', like_count = 3 WHERE id = ANY($1::int[]) RETURNING id`, [[real.id, studio.id]]);
+
+  const seen = [];
+  let cursor = null;
+  for (let i = 0; i < 20 && !(seen.includes(real.id) && seen.includes(studio.id)); i++) {
+    const page = await listFeed({ viewerId: u.id, mode: 'discover', cursor, limit: 50 });
+    seen.push(...page.posts.map((p) => p.id));
+    if (!page.nextCursor) break;
+    cursor = page.nextCursor;
+  }
+  assert.ok(seen.includes(real.id) && seen.includes(studio.id), 'both posts appear in discover');
+  assert.ok(seen.indexOf(real.id) < seen.indexOf(studio.id), 'the real photo ranks first');
+});

@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Create" };
 export default function CreatePage() {
   return (
     <>
-      <PageHeader eyebrow="Studio" title="Create" description="Post a photo or video, or make something new in the AI Studio." />
+      <PageHeader eyebrow="Share" title="Create" description="Post a photo or video of your pet for the pack." />
       <CreateHub />
     </>
   );

@@ -8,7 +8,7 @@ const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin"], display: 
 
 export const metadata: Metadata = {
   title: { default: "Pawtella", template: "%s · Pawtella" },
-  description: "Your pet's favourite app. AI videos of your pet, answers about their health and habits, and supplies with pickup in Toronto or delivery.",
+  description: "Your pet's favourite app. Share photos and videos of your pet, get answers about their health and habits, and shop supplies with pickup in Toronto or delivery.",
   applicationName: "Pawtella",
   metadataBase: process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL) : undefined,
 };

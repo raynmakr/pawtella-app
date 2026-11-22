@@ -105,7 +105,7 @@ function render() {
   <section class="hero">
     <div>
       <h1>Grow your pet business <span>with Pawtella</span></h1>
-      <p>Pawtella is the Toronto pet app: AI pet photos and videos, a pet-care assistant, and supplies delivered or picked up. Partners send clients our way and earn on every order. We send pet parents your way through the in-app directory.</p>
+      <p>Pawtella is the Toronto pet app: a community for pet photos and videos, a pet-care assistant, and supplies delivered or picked up. Partners send clients our way and earn on every order. We send pet parents your way through the in-app directory.</p>
       <div class="cta">
         <a class="btn" href="${escapeHtml(deepLink)}">Apply in the app</a>
         <span style="color:var(--muted);font-size:14px">Free to join · no minimums · approval in ~2 days</span>

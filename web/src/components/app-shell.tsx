@@ -84,7 +84,7 @@ function useSignOut() {
   };
 }
 
-/** Create hub: "Post a photo or video" and "AI Studio". */
+/** Create sheet: posting a real photo or video is the main action; the Studio is a quiet extra. */
 export function CreateDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const router = useRouter();
   const go = (href: string) => {
@@ -95,35 +95,30 @@ export function CreateDrawer({ open, onOpenChange }: { open: boolean; onOpenChan
     <Drawer open={open} onOpenChange={onOpenChange} showSwipeHandle>
       <DrawerContent className="pb-safe">
         <DrawerHeader className="text-center">
-          <DrawerTitle className="text-xl">What do you want to make?</DrawerTitle>
-          <DrawerDescription>Share a moment or let the AI Studio imagine one.</DrawerDescription>
+          <DrawerTitle className="text-xl">Share a moment</DrawerTitle>
+          <DrawerDescription>Post a photo or video of your pet for the pack.</DrawerDescription>
         </DrawerHeader>
         <div className="grid gap-3 px-4 pb-6">
           <button
             type="button"
             onClick={() => go("/post/new")}
-            className="flex items-center gap-4 rounded-card bg-card p-4 text-left ring-1 ring-border transition hover:ring-primary/40 active:scale-[0.99]"
+            className="flex items-center gap-4 rounded-card bg-primary p-4 text-left text-primary-foreground shadow-soft transition hover:shadow-lift active:scale-[0.99]"
           >
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-teal-soft text-secondary">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/15">
               <ImagePlusIcon className="size-6" />
             </span>
             <span>
               <span className="block font-heading text-base font-bold">Post a photo or video</span>
-              <span className="block text-sm text-muted-foreground">From your camera roll, with an AI caption.</span>
+              <span className="block text-sm opacity-90">Straight from your camera or camera roll.</span>
             </span>
           </button>
           <button
             type="button"
             onClick={() => go("/studio")}
-            className="flex items-center gap-4 rounded-card bg-card p-4 text-left ring-1 ring-border transition hover:ring-primary/40 active:scale-[0.99]"
+            className="mx-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
           >
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-coral-soft text-primary">
-              <SparklesIcon className="size-6" />
-            </span>
-            <span>
-              <span className="block font-heading text-base font-bold">AI Studio</span>
-              <span className="block text-sm text-muted-foreground">Turn a pet photo into an image or video.</span>
-            </span>
+            <SparklesIcon className="size-4" />
+            Or try a fun style in the Studio
           </button>
         </div>
       </DrawerContent>

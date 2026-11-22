@@ -30,7 +30,7 @@ async function GET(req, res) {
     const name = partner?.business_name || partner?.businessName || 'a Pawtella partner';
     const logo = partner?.logo_url || partner?.logoUrl || null;
     title = `${name} invited you to Pawtella`;
-    description = `Join Pawtella through ${name} and start with ${STARTING_POINTS} Paw Points for AI pet videos and store discounts.`;
+    description = `Join Pawtella through ${name} and start with ${STARTING_POINTS} Paw Points to spend on supplies.`;
     hero = `
 <section class="card hero">
   ${logo ? `<img class="avatar" src="${escapeHtml(logo)}" alt="${escapeHtml(name)}">` : `<span class="avatar">${initials(name)}</span>`}
@@ -43,7 +43,7 @@ async function GET(req, res) {
       return html(res, notFoundPage({ title: 'Invite link not found', text: 'This invite is no longer valid.' }), 404);
     }
     title = `@${user.handle} invited you to Pawtella`;
-    description = `Join @${user.handle} on Pawtella and start with ${STARTING_POINTS} Paw Points for AI pet videos and store discounts.`;
+    description = `Join @${user.handle} on Pawtella and start with ${STARTING_POINTS} Paw Points to spend on supplies.`;
     hero = `
 <section class="card hero">
   ${user.avatar_url ? `<img class="avatar" src="${escapeHtml(user.avatar_url)}" alt="">` : `<span class="avatar">${initials(user.display_name || user.handle)}</span>`}
@@ -71,7 +71,7 @@ async function GET(req, res) {
     bodyHtml: `${hero}${installCta({
       deepLink,
       headline: `Start with ${STARTING_POINTS} Paw Points`,
-      sub: 'Make AI videos of your pet, ask the pet assistant anything and save on supplies. Free to start.',
+      sub: 'Share photos and videos of your pet, ask the pet assistant anything and save on supplies. Free to start.',
     })}`,
   });
 

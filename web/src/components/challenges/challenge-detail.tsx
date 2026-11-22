@@ -67,7 +67,7 @@ function Entries({ challengeId }: { challengeId: number }) {
   if (q.isPending) return <ListSkeleton variant="tile" rows={6} />;
   if (q.isError) return <ErrorState title="Couldn't load entries" error={q.error} onRetry={() => q.refetch()} retrying={q.isFetching} />;
   const posts = q.data.pages.flatMap((p) => p.posts);
-  if (posts.length === 0) return <EmptyState icon={<CameraIcon />} title="No entries yet" description="Be the first in. Post a photo or create one in the Studio with this challenge selected." />;
+  if (posts.length === 0) return <EmptyState icon={<CameraIcon />} title="No entries yet" description="Be the first in. Post a photo or video of your pet with this challenge selected." />;
   return (
     <>
       <PostsGrid tiles={posts} />
@@ -137,7 +137,7 @@ export function ChallengeDetail({ id }: { id: string }) {
           <h2 className="text-lg">Rules</h2>
           {ch.description && <p className="mt-2 text-[15px] leading-relaxed">{ch.description}</p>}
           <ul className="mt-3 grid gap-2 text-sm text-muted-foreground">
-            <li>Post a photo, video or Studio creation with this challenge selected.</li>
+            <li>Post a photo or video of your pet with this challenge selected.</li>
             <li>The entry with the most likes when the timer ends wins. Ties go to the earliest entry.</li>
             <li>
               Winner: <strong className="text-foreground">+{ch.rewardPoints} Paw Points</strong>. Runner-ups: <strong className="text-foreground">+{ch.runnerUpPoints}</strong> each.
@@ -152,12 +152,15 @@ export function ChallengeDetail({ id }: { id: string }) {
           </p>
           {open && (
             <div className="flex flex-col gap-2">
-              <Button size="lg" nativeButton={false} render={<Link href={studioHref(ch)} />}>
-                <SparklesIcon data-icon="inline-start" /> Enter with Studio
+              <Button size="lg" nativeButton={false} render={<Link href={postHref(ch)} />}>
+                <CameraIcon data-icon="inline-start" /> Post your entry
               </Button>
-              <Button size="lg" variant="soft" nativeButton={false} render={<Link href={postHref(ch)} />}>
-                <CameraIcon data-icon="inline-start" /> Post a photo
-              </Button>
+              <Link
+                href={studioHref(ch)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              >
+                <SparklesIcon className="size-4" /> Or try a Studio style
+              </Link>
             </div>
           )}
         </aside>

@@ -9,7 +9,7 @@ import { page, notFoundPage, installCta, setRefCookie, cleanRef, initials } from
 function describe(post, pet) {
   if (post.caption) return post.caption.length > 200 ? `${post.caption.slice(0, 197)}…` : post.caption;
   const who = pet?.name ? `${pet.name} the ${pet.species}` : 'a pet';
-  return `Watch ${who} made with Pawtella — AI videos and photos of your pet.`;
+  return `Meet ${who} on Pawtella, where pet people share photos and videos.`;
 }
 
 async function GET(req, res) {
@@ -77,7 +77,7 @@ async function GET(req, res) {
     <div class="stats"><span>&#10084; ${post.likeCount}</span><span>&#128172; ${post.commentCount}</span><span>&#8599; ${post.shareCount}</span></div>
   </div>
 </article>
-${installCta({ deepLink, headline: 'Make yours free', sub: 'Made with Pawtella — make yours free, 30 Paw Points to start.' })}`;
+${installCta({ deepLink, headline: 'Share your pet too', sub: 'Join Pawtella free and post your own photos and videos. 30 Paw Points to start.' })}`;
 
   const markup = page({ title, description, meta, canonical, bodyHtml: body });
 
