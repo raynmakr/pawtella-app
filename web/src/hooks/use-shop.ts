@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery, useQueries, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQueries, useQuery } from "@tanstack/react-query";
 import { shopService, type ProductsQuery } from "@/services/shop";
 import { reviewsService } from "@/services/reviews";
 import { queryKeys } from "@/lib/query-keys";
@@ -20,6 +20,9 @@ export function useProducts(params: Omit<ProductsQuery, "cursor">, enabled = tru
     queryFn: ({ pageParam }) => shopService.products({ ...params, cursor: pageParam || undefined }),
     initialPageParam: "" as string,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    // Keep the last results on screen while the next search loads instead of flashing skeletons.
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
     enabled,
   });
 }

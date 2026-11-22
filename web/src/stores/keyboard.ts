@@ -19,6 +19,12 @@ interface KeyboardState {
   bottomInset: number;
   /** A text field (textarea/input/contenteditable) is focused on a touch device. */
   focused: boolean;
+  /**
+   * The focused field is inside a `[data-keyboard-lock]` region (the Ask chat), which pins
+   * itself above the keyboard and needs the page frozen. Ordinary fields leave this false so
+   * the browser can scroll them into view as usual.
+   */
+  locked: boolean;
   set: (next: {
     inset: number;
     viewportHeight: number;
@@ -27,6 +33,7 @@ interface KeyboardState {
     bottomInset: number;
   }) => void;
   setFocused: (focused: boolean) => void;
+  setLocked: (locked: boolean) => void;
 }
 
 export const useKeyboardStore = create<KeyboardState>((set) => ({
@@ -36,6 +43,7 @@ export const useKeyboardStore = create<KeyboardState>((set) => ({
   innerHeight: 0,
   bottomInset: 0,
   focused: false,
+  locked: false,
   set: (next) =>
     set((s) =>
       s.inset === next.inset &&
@@ -47,6 +55,7 @@ export const useKeyboardStore = create<KeyboardState>((set) => ({
         : { ...s, ...next },
     ),
   setFocused: (focused) => set((s) => (s.focused === focused ? s : { ...s, focused })),
+  setLocked: (locked) => set((s) => (s.locked === locked ? s : { ...s, locked })),
 }));
 
 /**

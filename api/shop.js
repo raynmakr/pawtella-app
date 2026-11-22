@@ -17,6 +17,27 @@ const DEPOT_LOCATION_ID = gid('Location', env.shopify.depotLocationId || '115648
 
 const BASE = '/api/shop';
 
+// Short-lived cache of catalog pages, per warm function instance. Search fires on every pause in
+// typing and Storefront answers in 0.3-1.3 s, so repeat queries (backspacing, re-typing, other
+// shoppers searching "treats") come back instantly. Products are public, so one copy serves all.
+const PRODUCTS_TTL_MS = 60_000;
+const PRODUCTS_MAX = 300;
+const productsCache = new Map();
+
+async function cachedProducts(params) {
+  const key = JSON.stringify([params.collection || '', String(params.query || '').trim().toLowerCase(), params.cursor || '', params.first || '']);
+  const hit = productsCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.value;
+  const result = await shopify.getProducts(params);
+  const value = { ...result, products: filterAvailableProducts(result.products) };
+  if (productsCache.size >= PRODUCTS_MAX) productsCache.delete(productsCache.keys().next().value);
+  productsCache.set(key, { value, expires: Date.now() + PRODUCTS_TTL_MS });
+  return value;
+}
+export function __resetProductsCache() {
+  productsCache.clear();
+}
+
 export const DEFAULT_FULFILLMENT = {
   depot: {
     name: 'Pawtella Toronto Depot',
@@ -144,10 +165,10 @@ async function get(req) {
   }
   if (head === 'products' && seg.length === 1) {
     const { collection, q, query, cursor, first } = req.query || {};
-    const result = await shopify.getProducts({ collection, query: q || query, cursor, first });
-    // Hide out-of-stock products from browse, collections and search (Shopify is the source of
-    // truth; continue-selling / special-order items stay visible). Restocked items reappear.
-    return { ...result, products: filterAvailableProducts(result.products), isMock: shopify.isMock };
+    // Out-of-stock products are hidden from browse, collections and search (Shopify is the source
+    // of truth; continue-selling / special-order items stay visible). Restocked items reappear.
+    const result = await cachedProducts({ collection, query: q || query, cursor, first });
+    return { ...result, isMock: shopify.isMock };
   }
   if (head === 'products' && seg.length === 2) {
     const handle = decodeURIComponent(second);
