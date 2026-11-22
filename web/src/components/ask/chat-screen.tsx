@@ -98,6 +98,8 @@ export function ChatScreen() {
 
   return (
     <div
+      // Fields inside opt into KeyboardListener's page lock + top pin (see components/keyboard-listener.tsx).
+      data-keyboard-lock=""
       className={cn(
         "flex flex-col md:static md:h-[calc(100dvh-5rem)] md:flex-row md:gap-6 md:bg-transparent md:px-0 md:pt-0",
         keyboardOpen

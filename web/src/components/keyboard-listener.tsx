@@ -16,6 +16,11 @@ function isTextField(el: EventTarget | null): boolean {
   return false;
 }
 
+/** The field sits in a region that pins itself above the keyboard (the Ask chat). */
+function inLockRegion(el: EventTarget | null): boolean {
+  return el instanceof Element && el.closest("[data-keyboard-lock]") !== null;
+}
+
 /** iOS/iPadOS Safari — the only platform with the floating accessory bar above the keyboard. */
 function isIOS(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -49,6 +54,7 @@ const IOS_ACCESSORY_BAR = 56;
 export function KeyboardListener() {
   const set = useKeyboardStore((s) => s.set);
   const setFocused = useKeyboardStore((s) => s.setFocused);
+  const setLocked = useKeyboardStore((s) => s.setLocked);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -92,17 +98,19 @@ export function KeyboardListener() {
       if (!isTouch) return;
       if (isTextField(e.target)) {
         if (blurTimer) clearTimeout(blurTimer);
+        const lock = inLockRegion(e.target);
         setFocused(true);
+        setLocked(lock);
         update();
-        // iOS doesn't move the page under a fixed overlay, but belt-and-braces: keep the
-        // layout viewport pinned to the top so nothing slides under the keyboard.
-        window.scrollTo(0, 0);
+        // Only the pinned chat overlay wants the layout viewport held at the top. Any other
+        // field must be left alone so iOS scrolls it into view above the keyboard.
+        if (lock) window.scrollTo(0, 0);
         // iOS animates the keyboard (and resizes the visual viewport) over ~300ms, so the
         // first measurement is stale. Re-measure once it settles.
         if (settleTimer) clearTimeout(settleTimer);
         settleTimer = setTimeout(() => {
           update();
-          window.scrollTo(0, 0);
+          if (lock) window.scrollTo(0, 0);
         }, 300);
       }
     };
@@ -112,7 +120,9 @@ export function KeyboardListener() {
       // and moving between fields shouldn't flicker the layout.
       if (blurTimer) clearTimeout(blurTimer);
       blurTimer = setTimeout(() => {
-        setFocused(isTextField(document.activeElement));
+        const active = document.activeElement;
+        setFocused(isTextField(active));
+        setLocked(isTextField(active) && inLockRegion(active));
         update();
       }, 150);
     };
@@ -128,11 +138,13 @@ export function KeyboardListener() {
       if (blurTimer) clearTimeout(blurTimer);
       if (settleTimer) clearTimeout(settleTimer);
     };
-  }, [set, setFocused]);
+  }, [set, setFocused, setLocked]);
 
-  // Lock the page while the keyboard is open so iOS can't scroll the layout
-  // viewport out from under the pinned, fixed-position chat overlay.
-  const open = useKeyboardStore((s) => s.focused || s.inset > 0);
+  // Lock the page while the keyboard is open over the pinned, fixed-position chat overlay
+  // so iOS can't scroll the layout viewport out from under it. Only for fields inside a
+  // [data-keyboard-lock] region: locking for every field froze the page with ordinary
+  // inputs (e.g. the shop search) stuck under the keyboard.
+  const open = useKeyboardStore((s) => s.locked && (s.focused || s.inset > 0));
   useEffect(() => {
     const root = document.documentElement;
     const body = document.body;
